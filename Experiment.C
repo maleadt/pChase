@@ -37,6 +37,7 @@ Experiment::Experiment() :
     bytes_per_thread (DEFAULT_BYTES_PER_THREAD),
     num_threads      (DEFAULT_THREADS), 
     bytes_per_test   (DEFAULT_BYTES_PER_TEST),
+    seconds          (DEFAULT_SECONDS),
     iterations       (DEFAULT_ITERATIONS),
     experiments      (DEFAULT_EXPERIMENTS), 
     output_mode      (TABLE),
@@ -85,8 +86,14 @@ Experiment::parse_args(int argc, char* argv[])
 {
     int error = 0;
     for (int i=1; i < argc; i++) {
-	if (strcasecmp(argv[i], "-s") == 0 || strcasecmp(argv[i], "--strict") == 0) {
+	if (strcasecmp(argv[i], "-x") == 0 || strcasecmp(argv[i], "--strict") == 0) {
 	    this->strict = 1;
+	} else if (strcasecmp(argv[i], "-s") == 0 || strcasecmp(argv[i], "--seconds") == 0) {
+	    i++;
+	    if (i == argc) { error = 1; break; }
+	    this->seconds = Experiment::parse_real(argv[i]);
+	    this->iterations = 0;
+	    if (this->seconds == 0) { error = 1; break; }
 	} else if (strcasecmp(argv[i], "-l") == 0 || strcasecmp(argv[i], "--line") == 0) {
 	    i++;
 	    if (i == argc) { error = 1; break; }
@@ -116,6 +123,7 @@ Experiment::parse_args(int argc, char* argv[])
 	    i++;
 	    if (i == argc) { error = 1; break; }
 	    this->iterations = Experiment::parse_number(argv[i]);
+	    this->seconds = 0;
 	    if (this->iterations == 0) { error = 1; break; }
 	} else if (strcasecmp(argv[i], "-e") == 0 || strcasecmp(argv[i], "--experiments") == 0) {
 	    i++;
@@ -201,12 +209,13 @@ Experiment::parse_args(int argc, char* argv[])
 	printf("    [-c|--chain]       <number>    # bytes per chain (used to compute pages per chain)\n");
 	printf("    [-r|--references]  <number>    # chains per thread (memory loading)\n");
 	printf("    [-t|--threads]     <number>    # number of threads (concurrency and contention)\n");
-	printf("    [-i|--iterations]  <number>    # iterations\n");
+	printf("    [-i|--iterations]  <number>    # iterations per experiment\n");
 	printf("    [-e|--experiments] <number>    # experiments\n");
 	printf("    [-a|--access]      <pattern>   # memory access pattern\n");
 	printf("    [-o|--output]      <format>    # output format\n");
 	printf("    [-n|--numa]        <placement> # numa placement\n");
-	printf("    [-s|--strict]                  # fail rather than adjust options to sensible values\n");
+	printf("    [-s|--seconds]     <number>    # run each experiment for <number> seconds\n");
+	printf("    [-x|--strict]                  # fail rather than adjust options to sensible values\n");
 	printf("\n");
 	printf("<pattern> is selected from the following:\n");
 	printf("    random                         # all chains are accessed randomly\n");
@@ -241,7 +250,7 @@ Experiment::parse_args(int argc, char* argv[])
 	printf("To determine the number of NUMA domains currently available\n");
 	printf("on your system, use a command such as \"numastat\".\n");
 	printf("\n");
-	printf("Final note: strict is not yet implemented, and\n");
+	printf("Final note: strict is not yet fully implemented, and\n");
 	printf("maps do not gracefully handle ill-formed map specifications.\n");
 
 	return 1;
@@ -342,6 +351,33 @@ Experiment::parse_number( const char* s )
     return result;
 }
 
+
+float
+Experiment::parse_real( const char* s )
+{
+    float result = 0;
+    bool decimal = false;
+    float power = 1;
+
+    int len = strlen( s );
+    for (int i=0; i < len; i++) {
+	if ( '0' <= s[i] && s[i] <= '9' ) {
+	    if (! decimal) {
+		result = result * 10 + s[i] - '0';
+	    } else {
+		power = power / 10;
+		result = result + (s[i] - '0') * power;
+	    }
+	} else if ( '.' == s[i] ) {
+	    decimal = true;
+	} else {
+	    break;
+	}
+    }
+
+    return result;
+}
+
 void
 Experiment::alloc_local()
 {
@@ -422,6 +458,11 @@ Experiment::alloc_map()
     				// search for one or several ','
 	c = 0;
 	while (*p != '\0' && *p != ';') {
+	    if (chains <= c || threads <= t) {
+				// error in the thread/chain specification
+		fprintf(stderr, "Malformed map.\n");
+		exit(1);
+	    }
 	    int i = 0;
 	    while (*p != '\0' && *p != ';') {
 		if (*p == ',') { p++; break; }
@@ -510,7 +551,7 @@ Experiment::print()
 const char*
 Experiment::access()
 {
-    char* result = NULL;
+    const char* result = NULL;
 
     if (this->access_pattern == RANDOM) {
 	result = "random";
@@ -526,7 +567,7 @@ Experiment::access()
 const char*
 Experiment::placement()
 {
-    char* result = NULL;
+    const char* result = NULL;
 
     if (this->numa_placement == LOCAL) {
 	result = "local";

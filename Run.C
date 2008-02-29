@@ -25,12 +25,13 @@
 #include "SpinBarrier.h"
 
 
+static double max( double v1, double v2 );
 static double min( double v1, double v2 );
+static void chase_pointers(int64 chains_per_thread, int64 iterations, Chain** root);
 
 Lock   Run::global_mutex;
 int64  Run::_ops_per_chain = 0;
 double Run::_seconds       = 1E9;
-
 
 Run::Run()
 : exp(NULL), bp(NULL)
@@ -91,8 +92,50 @@ Run::run()
 	}
     }
 
+    if (this->exp->iterations <= 0) {
+	volatile static double istart  = 0;
+	volatile static double istop   = 0;
+	volatile static double elapsed = 0;
+	volatile static int64  iters   = 1;
+	volatile static double bound   = max(0.2, 10 * Timer::resolution());
+	for (iters=1; elapsed <= bound; iters=iters<<1) {
+	    this->bp->barrier();
+
+				// start timer
+	    if (this->thread_id() == 0) {
+		istart = Timer::seconds();
+	    }
+	    this->bp->barrier();
+
+				// chase pointers
+	    chase_pointers(this->exp->chains_per_thread, iters, root);
+
 				// barrier
-    for (int e=-1; e <= this->exp->experiments; e++) {
+	    this->bp->barrier();
+
+				// stop timer
+	    if (this->thread_id() == 0) {
+		istop = Timer::seconds();
+		elapsed = istop - istart;
+	    }
+	    this->bp->barrier();
+	}
+
+				// calculate the number of iterations
+	if (this->thread_id() == 0) {
+	    if (0 < this->exp->seconds) {
+		this->exp->iterations = max(1, 0.9999 + 0.5 * this->exp->seconds * iters / elapsed);
+	    } else {
+		this->exp->iterations = max(1, 0.9999 + iters / elapsed);
+	    }
+	}
+	this->bp->barrier();
+    }
+#if defined(UNDEFINED)
+#endif
+
+				// barrier
+    for (int e=0; e < this->exp->experiments; e++) {
 	this->bp->barrier();
 
 				// start timer
@@ -101,495 +144,8 @@ Run::run()
 	this->bp->barrier();
 
 				// chase pointers
-	if (this->exp->chains_per_thread == 1) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		while (a != NULL) {
-		    a = a->next;
-		}
-		this->mem_check( a );
-	    }
-	} else if (this->exp->chains_per_thread == 2) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-	    }
-	} else if (this->exp->chains_per_thread == 3) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-	    }
-	} else if (this->exp->chains_per_thread == 4) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-	    }
-	} else if (this->exp->chains_per_thread == 5) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-	    }
-	} else if (this->exp->chains_per_thread == 6) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-	    }
-	} else if (this->exp->chains_per_thread == 7) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-	    }
-	} else if (this->exp->chains_per_thread == 8) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		Chain* h = root[7];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		    h = h->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-		this->mem_check( h );
-	    }
-	} else if (this->exp->chains_per_thread == 9) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		Chain* h = root[7];
-		Chain* j = root[8];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		    h = h->next;
-		    j = j->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-		this->mem_check( h );
-		this->mem_check( j );
-	    }
-	} else if (this->exp->chains_per_thread == 10) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		Chain* h = root[7];
-		Chain* j = root[8];
-		Chain* k = root[9];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		    h = h->next;
-		    j = j->next;
-		    k = k->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-		this->mem_check( h );
-		this->mem_check( j );
-		this->mem_check( k );
-	    }
-	} else if (this->exp->chains_per_thread == 11) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		Chain* h = root[7];
-		Chain* j = root[8];
-		Chain* k = root[9];
-		Chain* l = root[10];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		    h = h->next;
-		    j = j->next;
-		    k = k->next;
-		    l = l->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-		this->mem_check( h );
-		this->mem_check( j );
-		this->mem_check( k );
-		this->mem_check( l );
-	    }
-	} else if (this->exp->chains_per_thread == 12) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		Chain* h = root[7];
-		Chain* j = root[8];
-		Chain* k = root[9];
-		Chain* l = root[10];
-		Chain* m = root[11];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		    h = h->next;
-		    j = j->next;
-		    k = k->next;
-		    l = l->next;
-		    m = m->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-		this->mem_check( h );
-		this->mem_check( j );
-		this->mem_check( k );
-		this->mem_check( l );
-		this->mem_check( m );
-	    }
-	} else if (this->exp->chains_per_thread == 13) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		Chain* h = root[7];
-		Chain* j = root[8];
-		Chain* k = root[9];
-		Chain* l = root[10];
-		Chain* m = root[11];
-		Chain* n = root[12];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		    h = h->next;
-		    j = j->next;
-		    k = k->next;
-		    l = l->next;
-		    m = m->next;
-		    n = n->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-		this->mem_check( h );
-		this->mem_check( j );
-		this->mem_check( k );
-		this->mem_check( l );
-		this->mem_check( m );
-		this->mem_check( n );
-	    }
-	} else if (this->exp->chains_per_thread == 14) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		Chain* h = root[7];
-		Chain* j = root[8];
-		Chain* k = root[9];
-		Chain* l = root[10];
-		Chain* m = root[11];
-		Chain* n = root[12];
-		Chain* o = root[13];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		    h = h->next;
-		    j = j->next;
-		    k = k->next;
-		    l = l->next;
-		    m = m->next;
-		    n = n->next;
-		    o = o->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-		this->mem_check( h );
-		this->mem_check( j );
-		this->mem_check( k );
-		this->mem_check( l );
-		this->mem_check( m );
-		this->mem_check( n );
-		this->mem_check( o );
-	    }
-	} else if (this->exp->chains_per_thread == 15) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		Chain* h = root[7];
-		Chain* j = root[8];
-		Chain* k = root[9];
-		Chain* l = root[10];
-		Chain* m = root[11];
-		Chain* n = root[12];
-		Chain* o = root[13];
-		Chain* p = root[14];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		    h = h->next;
-		    j = j->next;
-		    k = k->next;
-		    l = l->next;
-		    m = m->next;
-		    n = n->next;
-		    o = o->next;
-		    p = p->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-		this->mem_check( h );
-		this->mem_check( j );
-		this->mem_check( k );
-		this->mem_check( l );
-		this->mem_check( m );
-		this->mem_check( n );
-		this->mem_check( o );
-		this->mem_check( p );
-	    }
-	} else if (this->exp->chains_per_thread == 16) {
-	    for (int i=0; i < this->exp->iterations; i++) {
-		Chain* a = root[0];
-		Chain* b = root[1];
-		Chain* c = root[2];
-		Chain* d = root[3];
-		Chain* e = root[4];
-		Chain* f = root[5];
-		Chain* g = root[6];
-		Chain* h = root[7];
-		Chain* j = root[8];
-		Chain* k = root[9];
-		Chain* l = root[10];
-		Chain* m = root[11];
-		Chain* n = root[12];
-		Chain* o = root[13];
-		Chain* p = root[14];
-		Chain* q = root[15];
-		while (a != NULL) {
-		    a = a->next;
-		    b = b->next;
-		    c = c->next;
-		    d = d->next;
-		    e = e->next;
-		    f = f->next;
-		    g = g->next;
-		    h = h->next;
-		    j = j->next;
-		    k = k->next;
-		    l = l->next;
-		    m = m->next;
-		    n = n->next;
-		    o = o->next;
-		    p = p->next;
-		    q = q->next;
-		}
-		this->mem_check( a );
-		this->mem_check( b );
-		this->mem_check( c );
-		this->mem_check( d );
-		this->mem_check( e );
-		this->mem_check( f );
-		this->mem_check( g );
-		this->mem_check( h );
-		this->mem_check( j );
-		this->mem_check( k );
-		this->mem_check( l );
-		this->mem_check( m );
-		this->mem_check( n );
-		this->mem_check( o );
-		this->mem_check( p );
-		this->mem_check( q );
-	    }
-	}
+	chase_pointers(this->exp->chains_per_thread, this->exp->iterations, root);
+
 				// barrier
 	this->bp->barrier();
 
@@ -610,7 +166,6 @@ Run::run()
 
     this->bp->barrier();
 
-
     for (int i=0; i < this->exp->chains_per_thread; i++) {
 	if (chain_memory[i] != NULL) delete [] chain_memory[i];
     }
@@ -624,6 +179,13 @@ void
 Run::mem_check( Chain *m )
 {
     if (m == NULL) dummy += 1;
+}
+
+static double
+max( double v1, double v2 )
+{
+    if (v1 < v2) return v2;
+    return v1;
 }
 
 static double
@@ -758,4 +320,527 @@ Run::reverse_mem_init( Chain *mem )
     Run::global_mutex.unlock();
 
     return root;
+}
+
+static int64 dumb_ck = 0;
+void
+mem_chk( Chain *m )
+{
+    if (m == NULL) dumb_ck += 1;
+}
+
+static void
+chase_pointers(
+    int64 chains_per_thread,		// memory loading per thread
+    int64 iterations,			// number of iterations per experiment
+    Chain** root			// 
+)
+{
+				// chase pointers
+    switch (chains_per_thread) {
+    default:
+    case 1:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    while (a != NULL) {
+		a = a->next;
+	    }
+	    mem_chk( a );
+	}
+	break;
+    case 2:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	}
+	break;
+    case 3:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	}
+	break;
+    case 4:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	}
+	break;
+    case 5:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	}
+	break;
+    case 6:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	}
+	break;
+    case 7:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	}
+	break;
+    case 8:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    Chain* h = root[7];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+		h = h->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	    mem_chk( h );
+	}
+	break;
+    case 9:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    Chain* h = root[7];
+	    Chain* j = root[8];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+		h = h->next;
+		j = j->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	    mem_chk( h );
+	    mem_chk( j );
+	}
+	break;
+    case 10:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    Chain* h = root[7];
+	    Chain* j = root[8];
+	    Chain* k = root[9];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+		h = h->next;
+		j = j->next;
+		k = k->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	    mem_chk( h );
+	    mem_chk( j );
+	    mem_chk( k );
+	}
+	break;
+    case 11:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    Chain* h = root[7];
+	    Chain* j = root[8];
+	    Chain* k = root[9];
+	    Chain* l = root[10];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+		h = h->next;
+		j = j->next;
+		k = k->next;
+		l = l->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	    mem_chk( h );
+	    mem_chk( j );
+	    mem_chk( k );
+	    mem_chk( l );
+	}
+	break;
+    case 12:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    Chain* h = root[7];
+	    Chain* j = root[8];
+	    Chain* k = root[9];
+	    Chain* l = root[10];
+	    Chain* m = root[11];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+		h = h->next;
+		j = j->next;
+		k = k->next;
+		l = l->next;
+		m = m->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	    mem_chk( h );
+	    mem_chk( j );
+	    mem_chk( k );
+	    mem_chk( l );
+	    mem_chk( m );
+	}
+	break;
+    case 13:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    Chain* h = root[7];
+	    Chain* j = root[8];
+	    Chain* k = root[9];
+	    Chain* l = root[10];
+	    Chain* m = root[11];
+	    Chain* n = root[12];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+		h = h->next;
+		j = j->next;
+		k = k->next;
+		l = l->next;
+		m = m->next;
+		n = n->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	    mem_chk( h );
+	    mem_chk( j );
+	    mem_chk( k );
+	    mem_chk( l );
+	    mem_chk( m );
+	    mem_chk( n );
+	}
+	break;
+    case 14:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    Chain* h = root[7];
+	    Chain* j = root[8];
+	    Chain* k = root[9];
+	    Chain* l = root[10];
+	    Chain* m = root[11];
+	    Chain* n = root[12];
+	    Chain* o = root[13];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+		h = h->next;
+		j = j->next;
+		k = k->next;
+		l = l->next;
+		m = m->next;
+		n = n->next;
+		o = o->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	    mem_chk( h );
+	    mem_chk( j );
+	    mem_chk( k );
+	    mem_chk( l );
+	    mem_chk( m );
+	    mem_chk( n );
+	    mem_chk( o );
+	}
+	break;
+    case 15:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    Chain* h = root[7];
+	    Chain* j = root[8];
+	    Chain* k = root[9];
+	    Chain* l = root[10];
+	    Chain* m = root[11];
+	    Chain* n = root[12];
+	    Chain* o = root[13];
+	    Chain* p = root[14];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+		h = h->next;
+		j = j->next;
+		k = k->next;
+		l = l->next;
+		m = m->next;
+		n = n->next;
+		o = o->next;
+		p = p->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	    mem_chk( h );
+	    mem_chk( j );
+	    mem_chk( k );
+	    mem_chk( l );
+	    mem_chk( m );
+	    mem_chk( n );
+	    mem_chk( o );
+	    mem_chk( p );
+	}
+	break;
+    case 16:
+	for (int i=0; i < iterations; i++) {
+	    Chain* a = root[0];
+	    Chain* b = root[1];
+	    Chain* c = root[2];
+	    Chain* d = root[3];
+	    Chain* e = root[4];
+	    Chain* f = root[5];
+	    Chain* g = root[6];
+	    Chain* h = root[7];
+	    Chain* j = root[8];
+	    Chain* k = root[9];
+	    Chain* l = root[10];
+	    Chain* m = root[11];
+	    Chain* n = root[12];
+	    Chain* o = root[13];
+	    Chain* p = root[14];
+	    Chain* q = root[15];
+	    while (a != NULL) {
+		a = a->next;
+		b = b->next;
+		c = c->next;
+		d = d->next;
+		e = e->next;
+		f = f->next;
+		g = g->next;
+		h = h->next;
+		j = j->next;
+		k = k->next;
+		l = l->next;
+		m = m->next;
+		n = n->next;
+		o = o->next;
+		p = p->next;
+		q = q->next;
+	    }
+	    mem_chk( a );
+	    mem_chk( b );
+	    mem_chk( c );
+	    mem_chk( d );
+	    mem_chk( e );
+	    mem_chk( f );
+	    mem_chk( g );
+	    mem_chk( h );
+	    mem_chk( j );
+	    mem_chk( k );
+	    mem_chk( l );
+	    mem_chk( m );
+	    mem_chk( n );
+	    mem_chk( o );
+	    mem_chk( p );
+	    mem_chk( q );
+	}
+    }
 }

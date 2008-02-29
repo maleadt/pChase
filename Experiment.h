@@ -23,6 +23,7 @@ public:
 
     int   parse_args(int argc, char* argv[]); 
     int64 parse_number( const char* s );
+    float parse_real( const char* s );
 
     const char* placement();
     const char* access();
@@ -43,6 +44,7 @@ public:
     int64 num_threads;		// number of threads in the experiment
     int64 bytes_per_test;	// test working set size (bytes)
 
+    float seconds;		// number of seconds per experiment
     int64 iterations;		// number of iterations per experiment
     int64 experiments;		// number of experiments per test
 
@@ -82,7 +84,8 @@ public:
     const static int32 DEFAULT_BYTES_PER_THREAD  = DEFAULT_BYTES_PER_CHAIN * DEFAULT_CHAINS_PER_THREAD;
     const static int32 DEFAULT_THREADS           = 1;
     const static int32 DEFAULT_BYTES_PER_TEST    = DEFAULT_BYTES_PER_THREAD * DEFAULT_THREADS;
-    const static int32 DEFAULT_ITERATIONS        = 1;
+    const static int32 DEFAULT_SECONDS           = 1;
+    const static int32 DEFAULT_ITERATIONS        = 0;
     const static int32 DEFAULT_EXPERIMENTS       = 1;
 
     const static int32 DEFAULT_OUTPUT_MODE       = 1;
