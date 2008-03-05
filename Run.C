@@ -6,7 +6,7 @@
  * http://www.opensource.org/licenses/cpl1.0.php                               *
  *                                                                             *
  * Contributors:                                                               *
- *    Douglas M. pase - initial API and implementation                         *
+ *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
 
@@ -27,7 +27,9 @@
 
 static double max( double v1, double v2 );
 static double min( double v1, double v2 );
-static void chase_pointers(int64 chains_per_thread, int64 iterations, Chain** root);
+static void chase_pointers(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride);
+static void follow_streams(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride);
+static void (*run_benchmark)(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride) = chase_pointers;
 
 Lock   Run::global_mutex;
 int64  Run::_ops_per_chain = 0;
@@ -82,13 +84,23 @@ Run::run()
     }
 #endif
 
+				// initialize the chains and 
+				// select the function that
+				// will execute the tests
     for (int i=0; i < this->exp->chains_per_thread; i++) {
 	if (this->exp->access_pattern == Experiment::RANDOM) {
 	    root[i] = random_mem_init( chain_memory[i] );
-	} else if (0 < this->exp->stride) {
-	    root[i] = forward_mem_init( chain_memory[i] );
-	} else {
-	    root[i] = reverse_mem_init( chain_memory[i] );
+	    run_benchmark = chase_pointers;
+	} else if (this->exp->access_pattern == Experiment::STRIDED) {
+	    if (0 < this->exp->stride) {
+		root[i] = forward_mem_init( chain_memory[i] );
+	    } else {
+		root[i] = reverse_mem_init( chain_memory[i] );
+	    }
+	    run_benchmark = chase_pointers;
+	} else if (this->exp->access_pattern == Experiment::STREAM) {
+	    root[i] = stream_mem_init( chain_memory[i] );
+	    run_benchmark = follow_streams;
 	}
     }
 
@@ -97,7 +109,7 @@ Run::run()
 	volatile static double istop   = 0;
 	volatile static double elapsed = 0;
 	volatile static int64  iters   = 1;
-	volatile static double bound   = max(0.2, 10 * Timer::resolution());
+	volatile double bound   = max(0.2, 10 * Timer::resolution());
 	for (iters=1; elapsed <= bound; iters=iters<<1) {
 	    this->bp->barrier();
 
@@ -108,7 +120,7 @@ Run::run()
 	    this->bp->barrier();
 
 				// chase pointers
-	    chase_pointers(this->exp->chains_per_thread, iters, root);
+	    run_benchmark(this->exp->chains_per_thread, iters, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride);
 
 				// barrier
 	    this->bp->barrier();
@@ -144,7 +156,7 @@ Run::run()
 	this->bp->barrier();
 
 				// chase pointers
-	chase_pointers(this->exp->chains_per_thread, this->exp->iterations, root);
+	run_benchmark(this->exp->chains_per_thread, this->exp->iterations, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride);
 
 				// barrier
 	this->bp->barrier();
@@ -333,14 +345,17 @@ static void
 chase_pointers(
     int64 chains_per_thread,		// memory loading per thread
     int64 iterations,			// number of iterations per experiment
-    Chain** root			// 
+    Chain** root,			// root(s) of the chain(s) to follow
+    int64 bytes_per_line,		// ignored
+    int64 bytes_per_chain,		// ignored
+    int64 stride			// ignored
 )
 {
 				// chase pointers
     switch (chains_per_thread) {
     default:
     case 1:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    while (a != NULL) {
 		a = a->next;
@@ -349,7 +364,7 @@ chase_pointers(
 	}
 	break;
     case 2:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    while (a != NULL) {
@@ -361,7 +376,7 @@ chase_pointers(
 	}
 	break;
     case 3:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -376,7 +391,7 @@ chase_pointers(
 	}
 	break;
     case 4:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -394,7 +409,7 @@ chase_pointers(
 	}
 	break;
     case 5:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -415,7 +430,7 @@ chase_pointers(
 	}
 	break;
     case 6:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -439,7 +454,7 @@ chase_pointers(
 	}
 	break;
     case 7:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -466,7 +481,7 @@ chase_pointers(
 	}
 	break;
     case 8:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -496,7 +511,7 @@ chase_pointers(
 	}
 	break;
     case 9:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -529,7 +544,7 @@ chase_pointers(
 	}
 	break;
     case 10:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -565,7 +580,7 @@ chase_pointers(
 	}
 	break;
     case 11:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -604,7 +619,7 @@ chase_pointers(
 	}
 	break;
     case 12:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -646,7 +661,7 @@ chase_pointers(
 	}
 	break;
     case 13:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -691,7 +706,7 @@ chase_pointers(
 	}
 	break;
     case 14:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -739,7 +754,7 @@ chase_pointers(
 	}
 	break;
     case 15:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -790,7 +805,7 @@ chase_pointers(
 	}
 	break;
     case 16:
-	for (int i=0; i < iterations; i++) {
+	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
@@ -842,5 +857,350 @@ chase_pointers(
 	    mem_chk( p );
 	    mem_chk( q );
 	}
+    }
+}
+
+				// NOT WRITTEN YET -- DMP
+				// JUST A PLACE HOLDER!
+Chain*
+Run::stream_mem_init( Chain *mem )
+{
+// fprintf(stderr, "made it into stream_mem_init.\n");
+// fprintf(stderr, "chains_per_thread = %ld\n", this->exp->chains_per_thread);
+// fprintf(stderr, "iterations        = %ld\n", this->exp->iterations);
+// fprintf(stderr, "bytes_per_chain   = %ld\n", this->exp->bytes_per_chain);
+// fprintf(stderr, "stride            = %ld\n", this->exp->stride);
+    int64 local_ops_per_chain = 0;
+    double* tmp = (double *) mem;
+    int64 refs_per_line  = this->exp->bytes_per_line  / sizeof(double);
+    int64 refs_per_chain = this->exp->bytes_per_chain / sizeof(double);
+// fprintf(stderr, "refs_per_chain    = %ld\n", refs_per_chain);
+
+    for (int64 i=0; i < refs_per_chain; i += this->exp->stride*refs_per_line) {
+	tmp[i] = 0;
+	local_ops_per_chain += 1;
+    }
+
+    Run::global_mutex.lock();
+    Run::_ops_per_chain = local_ops_per_chain;
+    Run::global_mutex.unlock();
+
+// fprintf(stderr, "made it out of stream_mem_init.\n");
+    return mem;
+}
+
+static int64 summ_ck = 0;
+void
+sum_chk( double t )
+{
+    if (t != 0) summ_ck += 1;
+}
+
+				// NOT WRITTEN YET -- DMP
+				// JUST A PLACE HOLDER!
+static void
+follow_streams(
+    int64 chains_per_thread,		// memory loading per thread
+    int64 iterations,			// number of iterations per experiment
+    Chain** root,			// root(s) of the chain(s) to follow
+    int64 bytes_per_line,		// ignored
+    int64 bytes_per_chain,		// ignored
+    int64 stride			// ignored
+)
+{
+    int64 refs_per_line  = bytes_per_line  / sizeof(double);
+    int64 refs_per_chain = bytes_per_chain / sizeof(double);
+
+				// chase pointers
+    switch (chains_per_thread) {
+    default:
+    case 1:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 2:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    double* a1 = (double *) root[1];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 3:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    double* a1 = (double *) root[1];
+	    double* a2 = (double *) root[2];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 4:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    double* a1 = (double *) root[1];
+	    double* a2 = (double *) root[2];
+	    double* a3 = (double *) root[3];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2[j] + a3[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 5:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    double* a1 = (double *) root[1];
+	    double* a2 = (double *) root[2];
+	    double* a3 = (double *) root[3];
+	    double* a4 = (double *) root[4];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2[j] + a3[j] + a4[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 6:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    double* a1 = (double *) root[1];
+	    double* a2 = (double *) root[2];
+	    double* a3 = (double *) root[3];
+	    double* a4 = (double *) root[4];
+	    double* a5 = (double *) root[5];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2[j] + a3[j] + a4[j] + a5[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 7:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    double* a1 = (double *) root[1];
+	    double* a2 = (double *) root[2];
+	    double* a3 = (double *) root[3];
+	    double* a4 = (double *) root[4];
+	    double* a5 = (double *) root[5];
+	    double* a6 = (double *) root[6];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2[j] + a3[j] + a4[j] + a5[j] + a6[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 8:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    double* a1 = (double *) root[1];
+	    double* a2 = (double *) root[2];
+	    double* a3 = (double *) root[3];
+	    double* a4 = (double *) root[4];
+	    double* a5 = (double *) root[5];
+	    double* a6 = (double *) root[6];
+	    double* a7 = (double *) root[7];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2[j] + a3[j] + a4[j] + a5[j] + a6[j] + a7[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 9:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    double* a1 = (double *) root[1];
+	    double* a2 = (double *) root[2];
+	    double* a3 = (double *) root[3];
+	    double* a4 = (double *) root[4];
+	    double* a5 = (double *) root[5];
+	    double* a6 = (double *) root[6];
+	    double* a7 = (double *) root[7];
+	    double* a8 = (double *) root[8];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2[j] + a3[j] + a4[j] + a5[j] + a6[j] + a7[j] +
+		     a8[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 10:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0 = (double *) root[0];
+	    double* a1 = (double *) root[1];
+	    double* a2 = (double *) root[2];
+	    double* a3 = (double *) root[3];
+	    double* a4 = (double *) root[4];
+	    double* a5 = (double *) root[5];
+	    double* a6 = (double *) root[6];
+	    double* a7 = (double *) root[7];
+	    double* a8 = (double *) root[8];
+	    double* a9 = (double *) root[9];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2[j] + a3[j] + a4[j] + a5[j] + a6[j] + a7[j] +
+		     a8[j] + a9[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 11:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0  = (double *) root[ 0];
+	    double* a1  = (double *) root[ 1];
+	    double* a2  = (double *) root[ 2];
+	    double* a3  = (double *) root[ 3];
+	    double* a4  = (double *) root[ 4];
+	    double* a5  = (double *) root[ 5];
+	    double* a6  = (double *) root[ 6];
+	    double* a7  = (double *) root[ 7];
+	    double* a8  = (double *) root[ 8];
+	    double* a9  = (double *) root[ 9];
+	    double* a10 = (double *) root[10];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2 [j] + a3[j] + a4[j] + a5[j] + a6[j] + a7[j] +
+		     a8[j] + a9[j] + a10[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 12:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0  = (double *) root[ 0];
+	    double* a1  = (double *) root[ 1];
+	    double* a2  = (double *) root[ 2];
+	    double* a3  = (double *) root[ 3];
+	    double* a4  = (double *) root[ 4];
+	    double* a5  = (double *) root[ 5];
+	    double* a6  = (double *) root[ 6];
+	    double* a7  = (double *) root[ 7];
+	    double* a8  = (double *) root[ 8];
+	    double* a9  = (double *) root[ 9];
+	    double* a10 = (double *) root[10];
+	    double* a11 = (double *) root[11];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2 [j] + a3 [j] + a4[j] + a5[j] + a6[j] + a7[j] +
+		     a8[j] + a9[j] + a10[j] + a11[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 13:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0  = (double *) root[ 0];
+	    double* a1  = (double *) root[ 1];
+	    double* a2  = (double *) root[ 2];
+	    double* a3  = (double *) root[ 3];
+	    double* a4  = (double *) root[ 4];
+	    double* a5  = (double *) root[ 5];
+	    double* a6  = (double *) root[ 6];
+	    double* a7  = (double *) root[ 7];
+	    double* a8  = (double *) root[ 8];
+	    double* a9  = (double *) root[ 9];
+	    double* a10 = (double *) root[10];
+	    double* a11 = (double *) root[11];
+	    double* a12 = (double *) root[12];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2 [j] + a3 [j] + a4 [j] + a5[j] + a6[j] + a7[j] +
+		     a8[j] + a9[j] + a10[j] + a11[j] + a12[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 14:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0  = (double *) root[ 0];
+	    double* a1  = (double *) root[ 1];
+	    double* a2  = (double *) root[ 2];
+	    double* a3  = (double *) root[ 3];
+	    double* a4  = (double *) root[ 4];
+	    double* a5  = (double *) root[ 5];
+	    double* a6  = (double *) root[ 6];
+	    double* a7  = (double *) root[ 7];
+	    double* a8  = (double *) root[ 8];
+	    double* a9  = (double *) root[ 9];
+	    double* a10 = (double *) root[10];
+	    double* a11 = (double *) root[11];
+	    double* a12 = (double *) root[12];
+	    double* a13 = (double *) root[13];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2 [j] + a3 [j] + a4 [j] + a5 [j] + a6[j] + a7[j] +
+		     a8[j] + a9[j] + a10[j] + a11[j] + a12[j] + a13[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 15:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0  = (double *) root[ 0];
+	    double* a1  = (double *) root[ 1];
+	    double* a2  = (double *) root[ 2];
+	    double* a3  = (double *) root[ 3];
+	    double* a4  = (double *) root[ 4];
+	    double* a5  = (double *) root[ 5];
+	    double* a6  = (double *) root[ 6];
+	    double* a7  = (double *) root[ 7];
+	    double* a8  = (double *) root[ 8];
+	    double* a9  = (double *) root[ 9];
+	    double* a10 = (double *) root[10];
+	    double* a11 = (double *) root[11];
+	    double* a12 = (double *) root[12];
+	    double* a13 = (double *) root[13];
+	    double* a14 = (double *) root[14];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2 [j] + a3 [j] + a4 [j] + a5 [j] + a6 [j] + a7[j] +
+		     a8[j] + a9[j] + a10[j] + a11[j] + a12[j] + a13[j] + a14[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
+    case 16:
+	for (int64 i=0; i < iterations; i++) {
+	    double t = 0;
+	    double* a0  = (double *) root[ 0];
+	    double* a1  = (double *) root[ 1];
+	    double* a2  = (double *) root[ 2];
+	    double* a3  = (double *) root[ 3];
+	    double* a4  = (double *) root[ 4];
+	    double* a5  = (double *) root[ 5];
+	    double* a6  = (double *) root[ 6];
+	    double* a7  = (double *) root[ 7];
+	    double* a8  = (double *) root[ 8];
+	    double* a9  = (double *) root[ 9];
+	    double* a10 = (double *) root[10];
+	    double* a11 = (double *) root[11];
+	    double* a12 = (double *) root[12];
+	    double* a13 = (double *) root[13];
+	    double* a14 = (double *) root[14];
+	    double* a15 = (double *) root[15];
+	    for (int64 j=0; j < refs_per_chain; j+=stride*refs_per_line) {
+		t += a0[j] + a1[j] + a2 [j] + a3 [j] + a4 [j] + a5 [j] + a6 [j] + a7 [j] +
+		     a8[j] + a9[j] + a10[j] + a11[j] + a12[j] + a13[j] + a14[j] + a15[j];
+	    }
+	    sum_chk( t );
+	}
+	break;
     }
 }

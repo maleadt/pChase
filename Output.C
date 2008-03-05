@@ -6,7 +6,7 @@
  * http://www.opensource.org/licenses/cpl1.0.php                               *
  *                                                                             *
  * Contributors:                                                               *
- *    Douglas M. pase - initial API and implementation                         *
+ *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
 
@@ -68,21 +68,21 @@ Output::header( Experiment &e, int64 ops, double secs, double ck_res )
 void
 Output::csv( Experiment &e, int64 ops, double secs, double ck_res )
 {
-    printf("%d,", e.pointer_size);
-    printf("%d,", e.bytes_per_line);
-    printf("%d,", e.bytes_per_page);
-    printf("%d,", e.bytes_per_chain);
-    printf("%d,", e.bytes_per_thread);
-    printf("%d,", e.bytes_per_test);
-    printf("%d,", e.chains_per_thread);
-    printf("%d,", e.num_threads);
-    printf("%d,", e.iterations);
-    printf("%d,", e.experiments);
+    printf("%ld,", e.pointer_size);
+    printf("%ld,", e.bytes_per_line);
+    printf("%ld,", e.bytes_per_page);
+    printf("%ld,", e.bytes_per_chain);
+    printf("%ld,", e.bytes_per_thread);
+    printf("%ld,", e.bytes_per_test);
+    printf("%lld,", e.chains_per_thread);
+    printf("%ld,", e.num_threads);
+    printf("%ld,", e.iterations);
+    printf("%ld,", e.experiments);
     printf("%s,", e.access());
-    printf("%d,", e.stride);
+    printf("%ld,", e.stride);
     printf("%s,", e.placement());
-    printf("%d,", e.offset_or_mask);
-    printf("%d,", e.num_numa_domains);
+    printf("%ld,", e.offset_or_mask);
+    printf("%ld,", e.num_numa_domains);
     printf("\"");
     printf("%d:", e.thread_domain[0]);
     printf("%d", e.chain_domain[0][0]);
@@ -97,8 +97,8 @@ Output::csv( Experiment &e, int64 ops, double secs, double ck_res )
 	}
     }
     printf("\",");
-    printf("%d,", ops);
-    printf("%d,", ops * e.chains_per_thread * e.num_threads);
+    printf("%ld,", ops);
+    printf("%ld,", ops * e.chains_per_thread * e.num_threads);
     printf("%.3f,", secs);
     printf("%.0f,", secs/ck_res);
     printf("%.2f,", ck_res * 1E9);
@@ -111,21 +111,21 @@ Output::csv( Experiment &e, int64 ops, double secs, double ck_res )
 void
 Output::table( Experiment &e, int64 ops, double secs, double ck_res )
 {
-    printf("pointer size         = %d (bytes)\n", e.pointer_size);
-    printf("cache line size      = %d (bytes)\n", e.bytes_per_line);
-    printf("page size            = %d (bytes)\n", e.bytes_per_page);
-    printf("chain size           = %d (bytes)\n", e.bytes_per_chain);
-    printf("thread size          = %d (bytes)\n", e.bytes_per_thread);
-    printf("test size            = %d (bytes)\n", e.bytes_per_test);
-    printf("chains per thread    = %d\n", e.chains_per_thread);
-    printf("number of threads    = %d\n", e.num_threads);
-    printf("iterations           = %d\n", e.iterations);
-    printf("experiments          = %d\n", e.experiments);
+    printf("pointer size         = %ld (bytes)\n", e.pointer_size);
+    printf("cache line size      = %ld (bytes)\n", e.bytes_per_line);
+    printf("page size            = %ld (bytes)\n", e.bytes_per_page);
+    printf("chain size           = %ld (bytes)\n", e.bytes_per_chain);
+    printf("thread size          = %ld (bytes)\n", e.bytes_per_thread);
+    printf("test size            = %ld (bytes)\n", e.bytes_per_test);
+    printf("chains per thread    = %ld\n", e.chains_per_thread);
+    printf("number of threads    = %ld\n", e.num_threads);
+    printf("iterations           = %ld\n", e.iterations);
+    printf("experiments          = %ld\n", e.experiments);
     printf("access pattern       = %s\n", e.access());
-    printf("stride               = %d\n", e.stride);
+    printf("stride               = %ld\n", e.stride);
     printf("numa placement       = %s\n", e.placement());
-    printf("offset or mask       = %d\n", e.offset_or_mask);
-    printf("numa domains         = %d\n", e.num_numa_domains);
+    printf("offset or mask       = %ld\n", e.offset_or_mask);
+    printf("numa domains         = %ld\n", e.num_numa_domains);
     printf("domain map           = ");
     printf("\"");
     printf("%d:", e.thread_domain[0]);
@@ -141,8 +141,8 @@ Output::table( Experiment &e, int64 ops, double secs, double ck_res )
 	}
     }
     printf("\"\n");
-    printf("operations per chain = %d\n", ops);
-    printf("total operations     = %d\n", ops * e.chains_per_thread * e.num_threads);
+    printf("operations per chain = %ld\n", ops);
+    printf("total operations     = %ld\n", ops * e.chains_per_thread * e.num_threads);
     printf("elapsed time         = %.3f (seconds)\n", secs);
     printf("elapsed time         = %.0f (timer ticks)\n", secs/ck_res);
     printf("clock resolution     = %.2f (ns)\n", ck_res * 1E9);

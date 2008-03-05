@@ -1,42 +1,34 @@
-# MODE=NUMA make -j
 
 #
 # BIT  = { 32 | 64 }
 # MODE = { NUMA | SMP }
 #
-# BIT	= 64
-# MODE	= NUMA
-# MODE	= SMP
-
-ifneq ($(BIT), 64)
-ifneq ($(BIT), 32)
+ifndef BIT
 BIT	= 64
 endif
+ifndef MODE
+MODE	= NUMA
 endif
-
-ifneq ($(MODE), NUMA)
-ifneq ($(MODE), SMP)
-MODE	= SMP
-endif
-endif
-
 ifeq ($(MODE), NUMA)
 LIB	= -lpthread -lnuma
-endif
-
-ifeq ($(MODE), SMP)
-LIB	= -lpthread
+else
+LIB	= -lpthread 
 endif
 
 SRC	= Main.C Chain.C Experiment.C Lock.C Output.C Run.C SpinBarrier.C Timer.C Thread.C Types.C
 HDR	= $(SRC:.C=.h)
 OBJ	= $(SRC:.C=.o)
 EXE	= pChase$(BIT)_$(MODE)
+HYPDIR	= /web/hypercomputing.org/www/doc/Guest/pChase
+PCHDIR	= /web/pchase.org/www/doc/Guest/pChase
+TARFILE	= tgz/pChase-`date +"%Y-%m-%d"`.tgz
 
 RM	= /bin/rm
 MV	= /bin/mv
 CI	= /usr/bin/ci
 CO	= /usr/bin/co
+CP	= /bin/cp
+TAR	= /bin/tar
 
 CXXFLAGS= -O3 -m$(BIT) -D$(MODE)
 
@@ -59,3 +51,13 @@ ci:
 
 co:
 	$(CO) -l $(SRC) $(HDR) Makefile
+
+tar:
+	$(TAR) -cvzf $(TARFILE) $(SRC) $(HDR) Makefile License.htm License.txt pChase.sh run-pChase.sh
+
+cptar:
+	$(TAR) -cvzf $(TARFILE) $(SRC) $(HDR) Makefile License.htm License.txt pChase.sh run-pChase.sh
+	$(CP) $(TARFILE) $(HYPDIR)/tgz
+	$(CP) $(SRC) $(HDR) Makefile License.htm License.txt pChase.sh run-pChase.sh $(HYPDIR)
+	$(CP) $(TARFILE) $(PCHDIR)/tgz
+	$(CP) $(SRC) $(HDR) Makefile License.htm License.txt pChase.sh run-pChase.sh $(PCHDIR)

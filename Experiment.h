@@ -6,7 +6,7 @@
  * http://www.opensource.org/licenses/cpl1.0.php                               *
  *                                                                             *
  * Contributors:                                                               *
- *    Douglas M. pase - initial API and implementation                         *
+ *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
 
@@ -51,7 +51,7 @@ public:
     enum { CSV, BOTH, HEADER, TABLE }
 	output_mode;		// results output mode
 
-    enum { RANDOM, STRIDED }
+    enum { RANDOM, STRIDED, STREAM }
 	access_pattern;		// memory access pattern
     int64 stride;
 

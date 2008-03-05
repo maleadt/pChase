@@ -6,7 +6,7 @@
  * http://www.opensource.org/licenses/cpl1.0.php                               *
  *                                                                             *
  * Contributors:                                                               *
- *    Douglas M. pase - initial API and implementation                         *
+ *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/ 
 
 

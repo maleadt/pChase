@@ -6,7 +6,7 @@
  * http://www.opensource.org/licenses/cpl1.0.php                               *
  *                                                                             *
  * Contributors:                                                               *
- *    Douglas M. pase - initial API and implementation                         *
+ *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
 
@@ -39,6 +39,7 @@ private:
     Chain* random_mem_init( Chain *m );
     Chain* forward_mem_init( Chain *m );
     Chain* reverse_mem_init( Chain *m );
+    Chain* stream_mem_init( Chain *m );
 
     static Lock   global_mutex;		// global lock
     static int64  _ops_per_chain;	// total number of operations per chain
