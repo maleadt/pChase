@@ -40,7 +40,8 @@ Experiment::Experiment() :
     busy_cycles      (DEFAULT_BUSY_CYCLES),
     seconds          (DEFAULT_SECONDS),
     iterations       (DEFAULT_ITERATIONS),
-    experiments      (DEFAULT_EXPERIMENTS), 
+    experiments      (DEFAULT_EXPERIMENTS),
+    prefetch         (DEFAULT_PREFETCH),
     output_mode      (TABLE),
     access_pattern   (RANDOM),
     stride           (1),
@@ -68,6 +69,7 @@ Experiment::~Experiment()
 				// -i or --iters            iterations
 				// -e or --experiments      experiments
 				// -b or --busy				amount of cycles processor should remain busy
+				// -f or --prefetch			prefetch data
 				// -a or --access           memory access pattern
 				//         random           random access pattern
 				//         forward <stride> exclusive OR and mask
@@ -137,6 +139,8 @@ Experiment::parse_args(int argc, char* argv[])
 	    if (i == argc) { error = 1; break; }
 	    this->busy_cycles = Experiment::parse_number(argv[i]);
 	    if (this->experiments == 0) { error = 1; break; }
+	} else if (strcasecmp(argv[i], "-f") == 0 || strcasecmp(argv[i], "--prefetch") == 0) {
+	    this->prefetch = true;
 	} else if (strcasecmp(argv[i], "-a") == 0 || strcasecmp(argv[i], "--access") == 0) {
 	    i++;
 	    if (i == argc) { error = 1; break; }
@@ -229,6 +233,7 @@ Experiment::parse_args(int argc, char* argv[])
 	printf("    [-n|--numa]        <placement> # numa placement\n");
 	printf("    [-s|--seconds]     <number>    # run each experiment for <number> seconds\n");
 	printf("    [-b|--busy]        <number>    # how much processing cycles each loop should count\n");
+	printf("    [-f|--prefetch]                # prefetch data\n");
 	printf("    [-x|--strict]                  # fail rather than adjust options to sensible values\n");
 	printf("\n");
 	printf("<pattern> is selected from the following:\n");

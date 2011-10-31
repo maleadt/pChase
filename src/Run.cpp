@@ -27,13 +27,15 @@
 
 static double max( double v1, double v2 );
 static double min( double v1, double v2 );
-static void chase_pointers(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride, int64 busy_cycles);
-static void follow_streams(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride, int64 busy_cycles);
-static void (*run_benchmark)(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride, int64 busy_cycles) = chase_pointers;
+static void chase_pointers(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride, int64 busy_cycles, bool prefetch);
+static void follow_streams(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride, int64 busy_cycles, bool prefetch);
+static void (*run_benchmark)(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride, int64 busy_cycles, bool prefetch) = chase_pointers;
 
 Lock   Run::global_mutex;
 int64  Run::_ops_per_chain = 0;
 double Run::_seconds       = 1E9;
+
+#define prefetch(x) __builtin_prefetch(x)
 
 Run::Run()
 : exp(NULL), bp(NULL)
@@ -120,7 +122,7 @@ Run::run()
 	    this->bp->barrier();
 
 				// chase pointers
-	    run_benchmark(this->exp->chains_per_thread, iters, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride, this->exp->busy_cycles);
+	    run_benchmark(this->exp->chains_per_thread, iters, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride, this->exp->busy_cycles, this->exp->prefetch);
 
 				// barrier
 	    this->bp->barrier();
@@ -156,7 +158,7 @@ Run::run()
 	this->bp->barrier();
 
 				// chase pointers
-	run_benchmark(this->exp->chains_per_thread, this->exp->iterations, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride, this->exp->busy_cycles);
+	run_benchmark(this->exp->chains_per_thread, this->exp->iterations, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride, this->exp->busy_cycles, this->exp->prefetch);
 
 				// barrier
 	this->bp->barrier();
@@ -349,7 +351,8 @@ chase_pointers(
     int64 bytes_per_line,		// ignored
     int64 bytes_per_chain,		// ignored
     int64 stride,			// ignored
-    int64 busy_cycles	// processing cycles
+    int64 busy_cycles,	// processing cycles
+    bool prefetch		// prefetch?
 )
 {
 				// chase pointers
@@ -360,6 +363,8 @@ chase_pointers(
 	    Chain* a = root[0];
 	    while (a != NULL) {
 		a = a->next;
+		if (prefetch)
+			prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -373,6 +378,8 @@ chase_pointers(
 	    while (a != NULL) {
 		a = a->next;
 		b = b->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -389,6 +396,8 @@ chase_pointers(
 		a = a->next;
 		b = b->next;
 		c = c->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -408,6 +417,8 @@ chase_pointers(
 		b = b->next;
 		c = c->next;
 		d = d->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -430,6 +441,8 @@ chase_pointers(
 		c = c->next;
 		d = d->next;
 		e = e->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -455,6 +468,8 @@ chase_pointers(
 		d = d->next;
 		e = e->next;
 		f = f->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -483,6 +498,8 @@ chase_pointers(
 		e = e->next;
 		f = f->next;
 		g = g->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -514,6 +531,8 @@ chase_pointers(
 		f = f->next;
 		g = g->next;
 		h = h->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -548,6 +567,8 @@ chase_pointers(
 		g = g->next;
 		h = h->next;
 		j = j->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -585,6 +606,8 @@ chase_pointers(
 		h = h->next;
 		j = j->next;
 		k = k->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -625,6 +648,8 @@ chase_pointers(
 		j = j->next;
 		k = k->next;
 		l = l->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -668,6 +693,8 @@ chase_pointers(
 		k = k->next;
 		l = l->next;
 		m = m->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -714,6 +741,8 @@ chase_pointers(
 		l = l->next;
 		m = m->next;
 		n = n->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -763,6 +792,8 @@ chase_pointers(
 		m = m->next;
 		n = n->next;
 		o = o->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -815,6 +846,8 @@ chase_pointers(
 		n = n->next;
 		o = o->next;
 		p = p->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -870,6 +903,8 @@ chase_pointers(
 		o = o->next;
 		p = p->next;
 		q = q->next;
+		if (prefetch)
+					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
 	    }
@@ -939,7 +974,8 @@ follow_streams(
     int64 bytes_per_line,		// ignored
     int64 bytes_per_chain,		// ignored
     int64 stride,			// ignored
-    int64 busy_cycles	// ignored
+    int64 busy_cycles,	// ignored
+    bool prefetch		// ignored
 )
 {
     int64 refs_per_line  = bytes_per_line  / sizeof(double);

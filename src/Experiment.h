@@ -44,6 +44,7 @@ public:
     int64 num_threads;		// number of threads in the experiment
     int64 bytes_per_test;	// test working set size (bytes)
     int64 busy_cycles;		// processing cycles
+    bool prefetch;			// use of prefetching
 
     float seconds;		// number of seconds per experiment
     int64 iterations;		// number of iterations per experiment
@@ -91,6 +92,7 @@ public:
     const static int32 DEFAULT_EXPERIMENTS       = 1;
 
     const static int32 DEFAULT_OUTPUT_MODE       = 1;
+    const static bool DEFAULT_PREFETCH           = false;
 
     void alloc_local();
     void alloc_xor();
