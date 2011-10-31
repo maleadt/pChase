@@ -363,7 +363,7 @@ chase_pointers(
 	    Chain* a = root[0];
 	    while (a != NULL) {
 		a = a->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 			prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -378,7 +378,7 @@ chase_pointers(
 	    while (a != NULL) {
 		a = a->next;
 		b = b->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -396,7 +396,7 @@ chase_pointers(
 		a = a->next;
 		b = b->next;
 		c = c->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -417,7 +417,7 @@ chase_pointers(
 		b = b->next;
 		c = c->next;
 		d = d->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -441,7 +441,7 @@ chase_pointers(
 		c = c->next;
 		d = d->next;
 		e = e->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -468,7 +468,7 @@ chase_pointers(
 		d = d->next;
 		e = e->next;
 		f = f->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -498,7 +498,7 @@ chase_pointers(
 		e = e->next;
 		f = f->next;
 		g = g->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -531,7 +531,7 @@ chase_pointers(
 		f = f->next;
 		g = g->next;
 		h = h->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -567,7 +567,7 @@ chase_pointers(
 		g = g->next;
 		h = h->next;
 		j = j->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -606,7 +606,7 @@ chase_pointers(
 		h = h->next;
 		j = j->next;
 		k = k->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -648,7 +648,7 @@ chase_pointers(
 		j = j->next;
 		k = k->next;
 		l = l->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -693,7 +693,7 @@ chase_pointers(
 		k = k->next;
 		l = l->next;
 		m = m->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -741,7 +741,7 @@ chase_pointers(
 		l = l->next;
 		m = m->next;
 		n = n->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -792,7 +792,7 @@ chase_pointers(
 		m = m->next;
 		n = n->next;
 		o = o->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -846,7 +846,7 @@ chase_pointers(
 		n = n->next;
 		o = o->next;
 		p = p->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -903,7 +903,7 @@ chase_pointers(
 		o = o->next;
 		p = p->next;
 		q = q->next;
-		if (prefetch)
+		if (prefetch && a != NULL)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
