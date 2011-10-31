@@ -37,6 +37,7 @@ Experiment::Experiment() :
     bytes_per_thread (DEFAULT_BYTES_PER_THREAD),
     num_threads      (DEFAULT_THREADS), 
     bytes_per_test   (DEFAULT_BYTES_PER_TEST),
+    busy_cycles      (DEFAULT_BUSY_CYCLES),
     seconds          (DEFAULT_SECONDS),
     iterations       (DEFAULT_ITERATIONS),
     experiments      (DEFAULT_EXPERIMENTS), 
@@ -66,6 +67,7 @@ Experiment::~Experiment()
 				// -t or --threads          number of threads (concurrency and contention)
 				// -i or --iters            iterations
 				// -e or --experiments      experiments
+				// -b or --busy				amount of cycles processor should remain busy
 				// -a or --access           memory access pattern
 				//         random           random access pattern
 				//         forward <stride> exclusive OR and mask
@@ -129,6 +131,11 @@ Experiment::parse_args(int argc, char* argv[])
 	    i++;
 	    if (i == argc) { error = 1; break; }
 	    this->experiments = Experiment::parse_number(argv[i]);
+	    if (this->experiments == 0) { error = 1; break; }
+	} else if (strcasecmp(argv[i], "-b") == 0 || strcasecmp(argv[i], "--busy") == 0) {
+	    i++;
+	    if (i == argc) { error = 1; break; }
+	    this->busy_cycles = Experiment::parse_number(argv[i]);
 	    if (this->experiments == 0) { error = 1; break; }
 	} else if (strcasecmp(argv[i], "-a") == 0 || strcasecmp(argv[i], "--access") == 0) {
 	    i++;
@@ -221,6 +228,7 @@ Experiment::parse_args(int argc, char* argv[])
 	printf("    [-o|--output]      <format>    # output format\n");
 	printf("    [-n|--numa]        <placement> # numa placement\n");
 	printf("    [-s|--seconds]     <number>    # run each experiment for <number> seconds\n");
+	printf("    [-b|--busy]        <number>    # how much processing cycles each loop should count\n");
 	printf("    [-x|--strict]                  # fail rather than adjust options to sensible values\n");
 	printf("\n");
 	printf("<pattern> is selected from the following:\n");

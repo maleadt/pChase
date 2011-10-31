@@ -27,9 +27,9 @@
 
 static double max( double v1, double v2 );
 static double min( double v1, double v2 );
-static void chase_pointers(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride);
-static void follow_streams(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride);
-static void (*run_benchmark)(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride) = chase_pointers;
+static void chase_pointers(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride, int64 busy_cycles);
+static void follow_streams(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride, int64 busy_cycles);
+static void (*run_benchmark)(int64 chains_per_thread, int64 iterations, Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride, int64 busy_cycles) = chase_pointers;
 
 Lock   Run::global_mutex;
 int64  Run::_ops_per_chain = 0;
@@ -120,7 +120,7 @@ Run::run()
 	    this->bp->barrier();
 
 				// chase pointers
-	    run_benchmark(this->exp->chains_per_thread, iters, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride);
+	    run_benchmark(this->exp->chains_per_thread, iters, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride, this->exp->busy_cycles);
 
 				// barrier
 	    this->bp->barrier();
@@ -156,7 +156,7 @@ Run::run()
 	this->bp->barrier();
 
 				// chase pointers
-	run_benchmark(this->exp->chains_per_thread, this->exp->iterations, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride);
+	run_benchmark(this->exp->chains_per_thread, this->exp->iterations, root, this->exp->bytes_per_line, this->exp->bytes_per_chain, this->exp->stride, this->exp->busy_cycles);
 
 				// barrier
 	this->bp->barrier();
@@ -348,7 +348,8 @@ chase_pointers(
     Chain** root,			// root(s) of the chain(s) to follow
     int64 bytes_per_line,		// ignored
     int64 bytes_per_chain,		// ignored
-    int64 stride			// ignored
+    int64 stride,			// ignored
+    int64 busy_cycles	// processing cycles
 )
 {
 				// chase pointers
@@ -359,6 +360,8 @@ chase_pointers(
 	    Chain* a = root[0];
 	    while (a != NULL) {
 		a = a->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	}
@@ -370,6 +373,8 @@ chase_pointers(
 	    while (a != NULL) {
 		a = a->next;
 		b = b->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -384,6 +389,8 @@ chase_pointers(
 		a = a->next;
 		b = b->next;
 		c = c->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -401,6 +408,8 @@ chase_pointers(
 		b = b->next;
 		c = c->next;
 		d = d->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -421,6 +430,8 @@ chase_pointers(
 		c = c->next;
 		d = d->next;
 		e = e->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -444,6 +455,8 @@ chase_pointers(
 		d = d->next;
 		e = e->next;
 		f = f->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -470,6 +483,8 @@ chase_pointers(
 		e = e->next;
 		f = f->next;
 		g = g->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -499,6 +514,8 @@ chase_pointers(
 		f = f->next;
 		g = g->next;
 		h = h->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -531,6 +548,8 @@ chase_pointers(
 		g = g->next;
 		h = h->next;
 		j = j->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -566,6 +585,8 @@ chase_pointers(
 		h = h->next;
 		j = j->next;
 		k = k->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -604,6 +625,8 @@ chase_pointers(
 		j = j->next;
 		k = k->next;
 		l = l->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -645,6 +668,8 @@ chase_pointers(
 		k = k->next;
 		l = l->next;
 		m = m->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -689,6 +714,8 @@ chase_pointers(
 		l = l->next;
 		m = m->next;
 		n = n->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -736,6 +763,8 @@ chase_pointers(
 		m = m->next;
 		n = n->next;
 		o = o->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -786,6 +815,8 @@ chase_pointers(
 		n = n->next;
 		o = o->next;
 		p = p->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -839,6 +870,8 @@ chase_pointers(
 		o = o->next;
 		p = p->next;
 		q = q->next;
+		for (int64 j=0; j < busy_cycles; j++)
+			asm("nop");
 	    }
 	    mem_chk( a );
 	    mem_chk( b );
@@ -905,7 +938,8 @@ follow_streams(
     Chain** root,			// root(s) of the chain(s) to follow
     int64 bytes_per_line,		// ignored
     int64 bytes_per_chain,		// ignored
-    int64 stride			// ignored
+    int64 stride,			// ignored
+    int64 busy_cycles	// ignored
 )
 {
     int64 refs_per_line  = bytes_per_line  / sizeof(double);

@@ -40,9 +40,10 @@ public:
     int64 links_per_chain;	// working set chain size (links)
     int64 pages_per_chain;	// working set chain size (pages)
     int64 bytes_per_thread;	// thread working set size (bytes)
-    int64 chains_per_thread;	// memory loading per thread
+    int64 chains_per_thread;// memory loading per thread
     int64 num_threads;		// number of threads in the experiment
     int64 bytes_per_test;	// test working set size (bytes)
+    int64 busy_cycles;		// processing cycles
 
     float seconds;		// number of seconds per experiment
     int64 iterations;		// number of iterations per experiment
@@ -84,6 +85,7 @@ public:
     const static int32 DEFAULT_BYTES_PER_THREAD  = DEFAULT_BYTES_PER_CHAIN * DEFAULT_CHAINS_PER_THREAD;
     const static int32 DEFAULT_THREADS           = 1;
     const static int32 DEFAULT_BYTES_PER_TEST    = DEFAULT_BYTES_PER_THREAD * DEFAULT_THREADS;
+    const static int32 DEFAULT_BUSY_CYCLES       = 10;
     const static int32 DEFAULT_SECONDS           = 1;
     const static int32 DEFAULT_ITERATIONS        = 0;
     const static int32 DEFAULT_EXPERIMENTS       = 1;
