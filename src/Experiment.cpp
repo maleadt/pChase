@@ -547,6 +547,8 @@ Experiment::print()
     printf("bytes_per_thread  = %d\n", bytes_per_thread);
     printf("num_threads       = %d\n", num_threads);
     printf("bytes_per_test    = %d\n", bytes_per_test);
+    printf("busy cycles       = %d\n", busy_cycles);
+    printf("prefetch          = %d\n", prefetch);
     printf("iterations        = %d\n", iterations);
     printf("experiments       = %d\n", experiments);
     printf("access_pattern    = %d\n", access_pattern);

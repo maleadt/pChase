@@ -16,9 +16,14 @@
 class Chain {
 public:
     Chain();
+    Chain(Chain* end);
     ~Chain();
     Chain* next;
+
+    static Chain* END();
 private:
 };
+
+static Chain* END_OF_CHAIN = Chain::END();
 
 #endif

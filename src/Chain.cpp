@@ -15,10 +15,21 @@
 #include "Chain.h"
 
 Chain::Chain()
-: next(NULL)
+: next(END_OF_CHAIN)
+{
+}
+
+Chain::Chain(Chain *end)
+: next(end)
 {
 }
 
 Chain::~Chain()
 {
+}
+
+Chain* Chain::END()
+{
+    static Chain chain((Chain*) 0xDEADBEEF);
+    return &chain;
 }

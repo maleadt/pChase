@@ -225,8 +225,8 @@ Run::random_mem_init( Chain *mem )
 				// one pointer from each cache line
 				// within the page.  all pages and
 				// cache lines are chosen at random.
-    Chain* root = NULL;
-    Chain* prev = NULL;
+    Chain* root = END_OF_CHAIN;
+    Chain* prev = END_OF_CHAIN;
     int link_within_line = 0;
     int64 local_ops_per_chain = 0;
 
@@ -252,7 +252,7 @@ Run::random_mem_init( Chain *mem )
 	    int line_within_page = (line_factor * j + line_offset) % this->exp->lines_per_page;
 	    int link = page * this->exp->links_per_page + line_within_page * this->exp->links_per_line + link_within_line;
 
-	    if (root == NULL) {
+	    if (root == END_OF_CHAIN) {
 //		printf("root       = %d(%d)[0x%x].\n", page, line_within_page, mem+link);
 		prev = root = mem + link;
 		local_ops_per_chain += 1;
@@ -275,8 +275,8 @@ Run::random_mem_init( Chain *mem )
 Chain*
 Run::forward_mem_init( Chain *mem )
 {
-    Chain* root = NULL;
-    Chain* prev = NULL;
+    Chain* root = END_OF_CHAIN;
+    Chain* prev = END_OF_CHAIN;
     int link_within_line = 0;
     int64 local_ops_per_chain = 0;
 
@@ -304,8 +304,8 @@ Run::forward_mem_init( Chain *mem )
 Chain*
 Run::reverse_mem_init( Chain *mem )
 {
-    Chain* root = NULL;
-    Chain* prev = NULL;
+    Chain* root = END_OF_CHAIN;
+    Chain* prev = END_OF_CHAIN;
     int link_within_line = 0;
     int64 local_ops_per_chain = 0;
 
@@ -317,7 +317,7 @@ Run::reverse_mem_init( Chain *mem )
 
     for (int i=last; 0 <= i; i -= stride) {
 	int link = i * this->exp->links_per_line + link_within_line;
-	if (root == NULL) {
+	if (root == END_OF_CHAIN) {
 //	    printf("root       = %d(%d)[0x%x].\n", page, line_within_page, mem+link);
 	    prev = root = mem + link;
 	    local_ops_per_chain += 1;
@@ -340,7 +340,7 @@ static int64 dumb_ck = 0;
 void
 mem_chk( Chain *m )
 {
-    if (m == NULL) dumb_ck += 1;
+    if (m == END_OF_CHAIN) dumb_ck += 1;
 }
 
 static void
@@ -361,9 +361,9 @@ chase_pointers(
     case 1:
 	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 			prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -375,10 +375,10 @@ chase_pointers(
 	for (int64 i=0; i < iterations; i++) {
 	    Chain* a = root[0];
 	    Chain* b = root[1];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -392,11 +392,11 @@ chase_pointers(
 	    Chain* a = root[0];
 	    Chain* b = root[1];
 	    Chain* c = root[2];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -412,12 +412,12 @@ chase_pointers(
 	    Chain* b = root[1];
 	    Chain* c = root[2];
 	    Chain* d = root[3];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
 		d = d->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -435,13 +435,13 @@ chase_pointers(
 	    Chain* c = root[2];
 	    Chain* d = root[3];
 	    Chain* e = root[4];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
 		d = d->next;
 		e = e->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -461,14 +461,14 @@ chase_pointers(
 	    Chain* d = root[3];
 	    Chain* e = root[4];
 	    Chain* f = root[5];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
 		d = d->next;
 		e = e->next;
 		f = f->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -490,7 +490,7 @@ chase_pointers(
 	    Chain* e = root[4];
 	    Chain* f = root[5];
 	    Chain* g = root[6];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -498,7 +498,7 @@ chase_pointers(
 		e = e->next;
 		f = f->next;
 		g = g->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -522,7 +522,7 @@ chase_pointers(
 	    Chain* f = root[5];
 	    Chain* g = root[6];
 	    Chain* h = root[7];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -531,7 +531,7 @@ chase_pointers(
 		f = f->next;
 		g = g->next;
 		h = h->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -557,7 +557,7 @@ chase_pointers(
 	    Chain* g = root[6];
 	    Chain* h = root[7];
 	    Chain* j = root[8];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -567,7 +567,7 @@ chase_pointers(
 		g = g->next;
 		h = h->next;
 		j = j->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -595,7 +595,7 @@ chase_pointers(
 	    Chain* h = root[7];
 	    Chain* j = root[8];
 	    Chain* k = root[9];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -606,7 +606,7 @@ chase_pointers(
 		h = h->next;
 		j = j->next;
 		k = k->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -636,7 +636,7 @@ chase_pointers(
 	    Chain* j = root[8];
 	    Chain* k = root[9];
 	    Chain* l = root[10];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -648,7 +648,7 @@ chase_pointers(
 		j = j->next;
 		k = k->next;
 		l = l->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -680,7 +680,7 @@ chase_pointers(
 	    Chain* k = root[9];
 	    Chain* l = root[10];
 	    Chain* m = root[11];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -693,7 +693,7 @@ chase_pointers(
 		k = k->next;
 		l = l->next;
 		m = m->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -727,7 +727,7 @@ chase_pointers(
 	    Chain* l = root[10];
 	    Chain* m = root[11];
 	    Chain* n = root[12];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -741,7 +741,7 @@ chase_pointers(
 		l = l->next;
 		m = m->next;
 		n = n->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -777,7 +777,7 @@ chase_pointers(
 	    Chain* m = root[11];
 	    Chain* n = root[12];
 	    Chain* o = root[13];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -792,7 +792,7 @@ chase_pointers(
 		m = m->next;
 		n = n->next;
 		o = o->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -830,7 +830,7 @@ chase_pointers(
 	    Chain* n = root[12];
 	    Chain* o = root[13];
 	    Chain* p = root[14];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -846,7 +846,7 @@ chase_pointers(
 		n = n->next;
 		o = o->next;
 		p = p->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
@@ -886,7 +886,7 @@ chase_pointers(
 	    Chain* o = root[13];
 	    Chain* p = root[14];
 	    Chain* q = root[15];
-	    while (a != NULL) {
+	    while (a != END_OF_CHAIN) {
 		a = a->next;
 		b = b->next;
 		c = c->next;
@@ -903,7 +903,7 @@ chase_pointers(
 		o = o->next;
 		p = p->next;
 		q = q->next;
-		if (prefetch && a != NULL)
+		if (prefetch)
 					prefetch(a->next);
 		for (int64 j=0; j < busy_cycles; j++)
 			asm("nop");
