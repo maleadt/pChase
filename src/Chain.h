@@ -24,7 +24,6 @@
 
 struct Chain {
 	Chain* next;
-private:
 };
 
 #endif
