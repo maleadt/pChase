@@ -11,8 +11,6 @@
 
 #include <stdio.h>
 
-#include "Main.h"
-
 #include "Run.h"
 #include "Timer.h"
 #include "Types.h"
