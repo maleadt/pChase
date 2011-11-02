@@ -409,7 +409,8 @@ static benchmark chase_pointers(int64 chains_per_thread, // memory loading per t
 		c.mov(positions[i], ptr(positions[i], offsetof(Chain, next)));
 
 		// Prefetch next
-		// TODO
+		if (prefetch)
+			c.prefetch(ptr(positions[i]), AsmJit::PREFETCH_T0);
 	}
 
 	// Wait
