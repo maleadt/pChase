@@ -7,29 +7,24 @@
  *                                                                             *
  * Contributors:                                                               *
  *    Douglas M. Pase - initial API and implementation                         *
- *******************************************************************************/ 
-
+ *******************************************************************************/
 
 #include <stdio.h>
 
 #include "Chain.h"
 
-Chain::Chain()
-: next(END_OF_CHAIN)
-{
+Chain::Chain() :
+		next(END_OF_CHAIN) {
 }
 
-Chain::Chain(Chain *end)
-: next(end)
-{
+Chain::Chain(Chain *end) :
+		next(end) {
 }
 
-Chain::~Chain()
-{
+Chain::~Chain() {
 }
 
-Chain* Chain::END()
-{
-    static Chain chain((Chain*) 0xDEADBEEF);
-    return &chain;
+Chain* Chain::END() {
+	static Chain chain((Chain*) 0xDEADBEEF);
+	return &chain;
 }

@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #if !defined(Lock_h)
 #define Lock_h
 
@@ -17,14 +16,14 @@
 
 class Lock {
 public:
-    Lock();
-    ~Lock();
-    void lock();
-    int test();
-    void unlock();
+	Lock();
+	~Lock();
+	void lock();
+	int test();
+	void unlock();
 
 private:
-    pthread_mutex_t mutex;
+	pthread_mutex_t mutex;
 };
 
 #endif

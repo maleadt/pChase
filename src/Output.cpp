@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,25 +18,20 @@
 #include "Types.h"
 #include "Experiment.h"
 
-
-void
-Output::print( Experiment &e, int64 ops, double secs, double ck_res )
-{
-    if (e.output_mode == Experiment::CSV) {
-	Output::csv(e, ops, secs, ck_res);
-    } else if (e.output_mode == Experiment::BOTH) {
-	Output::header(e, ops, secs, ck_res);
-	Output::csv(e, ops, secs, ck_res);
-    } else if (e.output_mode == Experiment::HEADER) {
-	Output::header(e, ops, secs, ck_res);
-    } else {
-	Output::table(e, ops, secs, ck_res);
-    }
+void Output::print(Experiment &e, int64 ops, double secs, double ck_res) {
+	if (e.output_mode == Experiment::CSV) {
+		Output::csv(e, ops, secs, ck_res);
+	} else if (e.output_mode == Experiment::BOTH) {
+		Output::header(e, ops, secs, ck_res);
+		Output::csv(e, ops, secs, ck_res);
+	} else if (e.output_mode == Experiment::HEADER) {
+		Output::header(e, ops, secs, ck_res);
+	} else {
+		Output::table(e, ops, secs, ck_res);
+	}
 }
 
-void
-Output::header( Experiment &e, int64 ops, double secs, double ck_res )
-{
+void Output::header(Experiment &e, int64 ops, double secs, double ck_res) {
     printf("pointer size (bytes),");
     printf("cache line size (bytes),");
     printf("page size (bytes),");
@@ -65,9 +59,7 @@ Output::header( Experiment &e, int64 ops, double secs, double ck_res )
     fflush(stdout);
 }
 
-void
-Output::csv( Experiment &e, int64 ops, double secs, double ck_res )
-{
+void Output::csv(Experiment &e, int64 ops, double secs, double ck_res) {
     printf("%ld,", e.pointer_size);
     printf("%ld,", e.bytes_per_line);
     printf("%ld,", e.bytes_per_page);
@@ -86,16 +78,16 @@ Output::csv( Experiment &e, int64 ops, double secs, double ck_res )
     printf("\"");
     printf("%d:", e.thread_domain[0]);
     printf("%d", e.chain_domain[0][0]);
-    for (int j=1; j < e.chains_per_thread; j++) {
-	printf(",%d", e.chain_domain[0][j]);
-    }
-    for (int i=1; i < e.num_threads; i++) {
-	printf(";%d:", e.thread_domain[i]);
-	printf("%d", e.chain_domain[i][0]);
-	for (int j=1; j < e.chains_per_thread; j++) {
-	    printf(",%d", e.chain_domain[i][j]);
+    for (int j = 1; j < e.chains_per_thread; j++) {
+		printf(",%d", e.chain_domain[0][j]);
 	}
-    }
+	for (int i = 1; i < e.num_threads; i++) {
+		printf(";%d:", e.thread_domain[i]);
+		printf("%d", e.chain_domain[i][0]);
+		for (int j = 1; j < e.chains_per_thread; j++) {
+			printf(",%d", e.chain_domain[i][j]);
+		}
+	}
     printf("\",");
     printf("%ld,", ops);
     printf("%ld,", ops * e.chains_per_thread * e.num_threads);
@@ -108,9 +100,7 @@ Output::csv( Experiment &e, int64 ops, double secs, double ck_res )
     fflush(stdout);
 }
 
-void
-Output::table( Experiment &e, int64 ops, double secs, double ck_res )
-{
+void Output::table(Experiment &e, int64 ops, double secs, double ck_res) {
     printf("pointer size         = %ld (bytes)\n", e.pointer_size);
     printf("cache line size      = %ld (bytes)\n", e.bytes_per_line);
     printf("page size            = %ld (bytes)\n", e.bytes_per_page);
@@ -130,16 +120,16 @@ Output::table( Experiment &e, int64 ops, double secs, double ck_res )
     printf("\"");
     printf("%d:", e.thread_domain[0]);
     printf("%d", e.chain_domain[0][0]);
-    for (int j=1; j < e.chains_per_thread; j++) {
-	printf(",%d", e.chain_domain[0][j]);
-    }
-    for (int i=1; i < e.num_threads; i++) {
-	printf(";%d:", e.thread_domain[i]);
-	printf("%d", e.chain_domain[i][0]);
-	for (int j=1; j < e.chains_per_thread; j++) {
-	    printf(",%d", e.chain_domain[i][j]);
+    for (int j = 1; j < e.chains_per_thread; j++) {
+		printf(",%d", e.chain_domain[0][j]);
 	}
-    }
+	for (int i = 1; i < e.num_threads; i++) {
+		printf(";%d:", e.thread_domain[i]);
+		printf("%d", e.chain_domain[i][0]);
+		for (int j = 1; j < e.chains_per_thread; j++) {
+			printf(",%d", e.chain_domain[i][j]);
+		}
+	}
     printf("\"\n");
     printf("operations per chain = %ld\n", ops);
     printf("total operations     = %ld\n", ops * e.chains_per_thread * e.num_threads);

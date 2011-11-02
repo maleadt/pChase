@@ -9,37 +9,28 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #include <stdio.h>
 #include <pthread.h>
 
 #include "Lock.h"
 
-Lock::Lock()
-{
-    pthread_mutex_init( &(this->mutex), NULL );
+Lock::Lock() {
+	pthread_mutex_init(&(this->mutex), NULL);
 }
 
-Lock::~Lock()
-{
-    pthread_mutex_destroy( &(this->mutex) );
+Lock::~Lock() {
+	pthread_mutex_destroy(&(this->mutex));
 }
 
-void
-Lock::lock()
-{
-    pthread_mutex_lock( &(this->mutex) );
+void Lock::lock() {
+	pthread_mutex_lock(&(this->mutex));
 }
 
-int
-Lock::test()
-{
-    pthread_mutex_trylock( &(this->mutex) );
+int Lock::test() {
+	pthread_mutex_trylock(&(this->mutex));
 }
 
-void
-Lock::unlock()
-{
-    pthread_mutex_unlock( &(this->mutex) );
-} 
+void Lock::unlock() {
+	pthread_mutex_unlock(&(this->mutex));
+}
 

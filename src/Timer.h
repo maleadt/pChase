@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #if !defined(Timer_h)
 #define Timer_h
 
@@ -17,11 +16,11 @@
 
 class Timer {
 public:
-    static double seconds();
-    static double resolution();
-    static int64  ticks();
-    static void   calibrate();
-    static void   calibrate(int n);
+	static double seconds();
+	static double resolution();
+	static int64 ticks();
+	static void calibrate();
+	static void calibrate(int n);
 private:
 };
 

@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #if !defined(Types_h)
 #define Types_h
 
@@ -24,6 +23,6 @@ typedef unsigned short uint16;
 typedef unsigned char uint8;
 
 typedef double float64;
-typedef float  float32;
+typedef float float32;
 
 #endif

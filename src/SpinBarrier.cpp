@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 /******************************************************************************
  *                                                                            *
  * SpinBarrier                                                                *
@@ -27,22 +26,18 @@
 
 #include "SpinBarrier.h"
 
-				// create a new barrier
-SpinBarrier::SpinBarrier(int participants)
-: limit( participants )
-{
-    pthread_barrier_init( &barrier_obj, NULL, this->limit );
+// create a new barrier
+SpinBarrier::SpinBarrier(int participants) :
+		limit(participants) {
+	pthread_barrier_init(&barrier_obj, NULL, this->limit);
 }
 
-				// destroy an old barrier
-SpinBarrier::~SpinBarrier()
-{
+// destroy an old barrier
+SpinBarrier::~SpinBarrier() {
 }
 
-				// enter the barrier and wait.  everyone leaves 
-				// when the last participant enters the barrier.
-void
-SpinBarrier::barrier()
-{
-    pthread_barrier_wait( &this->barrier_obj );
+// enter the barrier and wait.  everyone leaves
+// when the last participant enters the barrier.
+void SpinBarrier::barrier() {
+	pthread_barrier_wait(&this->barrier_obj);
 }

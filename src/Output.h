@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #if !defined(Output_h)
 #define Output_h
 
@@ -18,10 +17,10 @@
 
 class Output {
 public:
-    static void print ( Experiment &e, int64 ops, double secs, double ck_res );
-    static void header( Experiment &e, int64 ops, double secs, double ck_res );
-    static void csv   ( Experiment &e, int64 ops, double secs, double ck_res );
-    static void table ( Experiment &e, int64 ops, double secs, double ck_res );
+	static void print(Experiment &e, int64 ops, double secs, double ck_res);
+	static void header(Experiment &e, int64 ops, double secs, double ck_res);
+	static void csv(Experiment &e, int64 ops, double secs, double ck_res);
+	static void table(Experiment &e, int64 ops, double secs, double ck_res);
 private:
 };
 

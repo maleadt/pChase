@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -19,68 +18,51 @@
 #include "Lock.h"
 
 Lock Thread::_global_lock;
-int  Thread::count = 0;
+int Thread::count = 0;
 
-Thread::Thread()
-{
-    Thread::global_lock();
+Thread::Thread() {
+	Thread::global_lock();
 	this->id = Thread::count;
 	Thread::count += 1;
-    Thread::global_unlock();
+	Thread::global_unlock();
 }
 
-Thread::~Thread()
-{
+Thread::~Thread() {
 }
 
-int
-Thread::start()
-{
-    return pthread_create(&this->thread, NULL, Thread::start_routine, this); 
+int Thread::start() {
+	return pthread_create(&this->thread, NULL, Thread::start_routine, this);
 }
 
 void*
-Thread::start_routine(void* p)
-{
-    ((Thread*)p)->run();
+Thread::start_routine(void* p) {
+	((Thread*) p)->run();
 
-    return NULL;
+	return NULL;
 }
 
-void
-Thread::exit()
-{
-    pthread_exit(NULL);
+void Thread::exit() {
+	pthread_exit(NULL);
 }
 
-int
-Thread::wait()
-{
-    pthread_join(this->thread, NULL);
+int Thread::wait() {
+	pthread_join(this->thread, NULL);
 
-    return 0;
+	return 0;
 }
 
-void
-Thread::lock()
-{
-    this->object_lock.lock();
+void Thread::lock() {
+	this->object_lock.lock();
 }
 
-void
-Thread::unlock()
-{
-    this->object_lock.unlock();
+void Thread::unlock() {
+	this->object_lock.unlock();
 }
 
-void
-Thread::global_lock()
-{
-    Thread::_global_lock.lock();
+void Thread::global_lock() {
+	Thread::_global_lock.lock();
 }
 
-void
-Thread::global_unlock()
-{
-    Thread::_global_lock.unlock();
+void Thread::global_unlock() {
+	Thread::_global_lock.unlock();
 }

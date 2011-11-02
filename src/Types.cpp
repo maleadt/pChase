@@ -9,5 +9,4 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #include "Types.h"

@@ -9,18 +9,17 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #if !defined(Chain_h)
 #define Chain_h
 
 class Chain {
 public:
-    Chain();
-    Chain(Chain* end);
-    ~Chain();
-    Chain* next;
+	Chain();
+	Chain(Chain* end);
+	~Chain();
+	Chain* next;
 
-    static Chain* END();
+	static Chain* END();
 private:
 };
 

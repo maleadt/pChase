@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 /******************************************************************************
  *                                                                            *
  * SpinBarrier                                                                *
@@ -31,14 +30,14 @@
 
 class SpinBarrier {
 public:
-    SpinBarrier(int participants);
-    ~SpinBarrier();
+	SpinBarrier(int participants);
+	~SpinBarrier();
 
-    void barrier();
+	void barrier();
 
 private:
-    int limit;				// number of barrier participants
-    pthread_barrier_t barrier_obj;
+	int limit; // number of barrier participants
+	pthread_barrier_t barrier_obj;
 };
 
 #endif

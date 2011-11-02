@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #include <stdio.h>
 
 #include "Main.h"
@@ -21,70 +20,75 @@
 #include "Experiment.h"
 #include "SpinBarrier.h"
 
-				// This program allocates and accesses
-				// a number of blocks of memory, one or more
-				// for each thread that executes.  Blocks
-				// are divided into sub-blocks called
-				// pages, and pages are divided into
-				// sub-blocks called cache lines.
-				// 
-				// All pages are collected into a list.
-				// Pages are selected for the list in
-				// a particular order.   Each cache line
-				// within the page is similarly gathered
-				// into a list in a particular order.
-				// In both cases the order may be random
-				// or linear.
-				//
-				// A root pointer points to the first
-				// cache line.  A pointer in the cache
-				// line points to the next cache line,
-				// which contains a pointer to the cache
-				// line after that, and so on.  This
-				// forms a pointer chain that touches all
-				// cache lines within the first page,
-				// then all cache lines within the second
-				// page, and so on until all pages are
-				// covered.  The last pointer contains
-				// NULL, terminating the chain.
-				//
-				// Depending on compile-time options,
-				// pointers may be 32-bit or 64-bit
-				// pointers.
+// This program allocates and accesses
+// a number of blocks of memory, one or more
+// for each thread that executes.  Blocks
+// are divided into sub-blocks called
+// pages, and pages are divided into
+// sub-blocks called cache lines.
+//
+// All pages are collected into a list.
+// Pages are selected for the list in
+// a particular order.   Each cache line
+// within the page is similarly gathered
+// into a list in a particular order.
+// In both cases the order may be random
+// or linear.
+//
+// A root pointer points to the first
+// cache line.  A pointer in the cache
+// line points to the next cache line,
+// which contains a pointer to the cache
+// line after that, and so on.  This
+// forms a pointer chain that touches all
+// cache lines within the first page,
+// then all cache lines within the second
+// page, and so on until all pages are
+// covered.  The last pointer contains
+// NULL, terminating the chain.
+//
+// Depending on compile-time options,
+// pointers may be 32-bit or 64-bit
+// pointers.
 
 int verbose = 0;
 
-int
-main( int argc, char* argv[] )
-{
-    Timer::calibrate(10000);
-    double clk_res = Timer::resolution();
+int main(int argc, char* argv[]) {
+	Timer
+	::calibrate(10000);
+	double clk_res = Timer
+	::resolution();
 
-    Experiment e;
-    if (e.parse_args(argc, argv)) {
-	return 0;
-    }
+	Experiment e;
+	if (e.parse_args(argc, argv)) {
+		return 0;
+	}
 
 #if defined(UNDEFINED)
-    e.print();
-    if (argv != NULL) return 0;
+	e.print();
+	if (argv != NULL) return 0;
 #endif
 
-    SpinBarrier sb( e.num_threads );
-    Run r[ e.num_threads ];
-    for (int i=0; i < e.num_threads; i++) {
-	r[i].set( e, &sb );
-	r[i].start();
-    }
+	SpinBarrier
+	sb(e.num_threads);
+	Run r[e.num_threads];
+	for (int i = 0; i < e.num_threads; i++) {
+		r[i].set(e, &sb);
+		r[i].start();
+	}
 
-    for (int i=0; i < e.num_threads; i++) {
-	r[i].wait();
-    }
+	for (int i = 0; i < e.num_threads; i++) {
+		r[i].wait();
+	}
 
-    int64  ops  = Run::ops_per_chain();
-    double secs = Run::seconds();
+	int64
+	ops = Run
+	::ops_per_chain();
+	double secs = Run
+	::seconds();
 
-    Output::print(e, ops, secs, clk_res);
+	Output
+	::print(e, ops, secs, clk_res);
 
-    return 0;
+	return 0;
 }

@@ -9,7 +9,6 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-
 #if !defined(Experiment_h)
 #define Experiment_h
 
@@ -18,17 +17,17 @@
 
 class Experiment {
 public:
-    Experiment();
-    ~Experiment();
+	Experiment();
+	~Experiment();
 
-    int   parse_args(int argc, char* argv[]); 
-    int64 parse_number( const char* s );
-    float parse_real( const char* s );
+	int parse_args(int argc, char* argv[]);
+	int64 parse_number(const char* s);
+	float parse_real(const char* s);
 
-    const char* placement();
-    const char* access();
+	const char* placement();
+	const char* access();
 
-			    // fundamental parameters
+	// fundamental parameters
     int64 pointer_size;		// number of bytes in a pointer
     int64 bytes_per_line;	// working set cache line size (bytes)
     int64 links_per_line;	// working set cache line size (links)
@@ -46,23 +45,23 @@ public:
     int64 busy_cycles;		// processing cycles
     bool prefetch;			// use of prefetching
 
-    float seconds;		// number of seconds per experiment
+    float seconds;			// number of seconds per experiment
     int64 iterations;		// number of iterations per experiment
     int64 experiments;		// number of experiments per test
 
     enum { CSV, BOTH, HEADER, TABLE }
-	output_mode;		// results output mode
+	output_mode;			// results output mode
 
     enum { RANDOM, STRIDED, STREAM }
-	access_pattern;		// memory access pattern
+	access_pattern;			// memory access pattern
     int64 stride;
 
     enum { LOCAL, XOR, ADD, MAP }
-	numa_placement;		// memory allocation mode
+	numa_placement;			// memory allocation mode
     int64 offset_or_mask;
     char* placement_map;
 
-				// maps threads and chains to numa domains
+	// maps threads and chains to numa domains
     int32* thread_domain;	// thread_domain[thread]
     int32** chain_domain;	// chain_domain[thread][chain]
     int32 numa_max_domain;	// highest numa domain id
@@ -70,7 +69,7 @@ public:
 
     char** random_state;	// random state for each thread
 
-    int strict;			// strictly adhere to user input, or fail
+    int strict;				// strictly adhere to user input, or fail
 
     const static int32 DEFAULT_POINTER_SIZE      = sizeof(Chain);
     const static int32 DEFAULT_BYTES_PER_LINE    = 64;
@@ -95,11 +94,11 @@ public:
     const static bool DEFAULT_PREFETCH           = false;
 
     void alloc_local();
-    void alloc_xor();
-    void alloc_add();
-    void alloc_map();
+	void alloc_xor();
+	void alloc_add();
+	void alloc_map();
 
-    void print();
+	void print();
 
 private:
 };
