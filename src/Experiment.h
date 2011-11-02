@@ -85,7 +85,7 @@ public:
     const static int32 DEFAULT_BYTES_PER_THREAD  = DEFAULT_BYTES_PER_CHAIN * DEFAULT_CHAINS_PER_THREAD;
     const static int32 DEFAULT_THREADS           = 1;
     const static int32 DEFAULT_BYTES_PER_TEST    = DEFAULT_BYTES_PER_THREAD * DEFAULT_THREADS;
-    const static int32 DEFAULT_BUSY_CYCLES       = 10;
+    const static int32 DEFAULT_BUSY_CYCLES       = 0;
     const static int32 DEFAULT_SECONDS           = 1;
     const static int32 DEFAULT_ITERATIONS        = 0;
     const static int32 DEFAULT_EXPERIMENTS       = 1;

@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stddef.h>
+#include <vector>
 
 #if defined(NUMA)
 #include <numa.h>
@@ -19,21 +21,24 @@
 
 #include "Run.h"
 
+#include <AsmJit/AsmJit.h>
+
 #include "Chain.h"
 #include "Timer.h"
 #include "SpinBarrier.h"
 
 static double max(double v1, double v2);
 static double min(double v1, double v2);
-static void chase_pointers(int64 chains_per_thread, int64 iterations,
-		Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride,
-		int64 busy_cycles, bool prefetch);
-static void follow_streams(int64 chains_per_thread, int64 iterations,
-		Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride,
-		int64 busy_cycles, bool prefetch);
-static void (*run_benchmark)(int64 chains_per_thread, int64 iterations,
-		Chain** root, int64 bytes_per_line, int64 bytes_per_chain, int64 stride,
-		int64 busy_cycles, bool prefetch) = chase_pointers;
+typedef void (*benchmark)(const Chain**);
+typedef benchmark (*generator)(int64 chains_per_thread,
+		int64 bytes_per_line, int64 bytes_per_chain,
+		int64 stride, int64 busy_cycles, bool prefetch);
+static benchmark chase_pointers(int64 chains_per_thread,
+		int64 bytes_per_line, int64 bytes_per_chain,
+		int64 stride, int64 busy_cycles, bool prefetch);
+static benchmark follow_streams(int64 chains_per_thread,
+		int64 bytes_per_line, int64 bytes_per_chain,
+		int64 stride, int64 busy_cycles, bool prefetch);
 
 Lock Run::global_mutex;
 int64 Run::_ops_per_chain = 0;
@@ -85,48 +90,40 @@ int Run::run() {
 #endif
 
 	// initialize the chains and
-	// select the function that
+	// compile the function that
 	// will execute the tests
+	generator gen;
 	for (int i = 0; i < this->exp->chains_per_thread; i++) {
 		if (this->exp->access_pattern == Experiment::RANDOM) {
 			root[i] = random_mem_init(chain_memory[i]);
-			run_benchmark = chase_pointers;
+			gen = chase_pointers;
 		} else if (this->exp->access_pattern == Experiment::STRIDED) {
 			if (0 < this->exp->stride) {
 				root[i] = forward_mem_init(chain_memory[i]);
 			} else {
 				root[i] = reverse_mem_init(chain_memory[i]);
 			}
-			run_benchmark = chase_pointers;
+			gen = chase_pointers;
 		} else if (this->exp->access_pattern == Experiment::STREAM) {
 			root[i] = stream_mem_init(chain_memory[i]);
-			run_benchmark = follow_streams;
+			gen = follow_streams;
 		}
 	}
 
-	// Calculate the amount of NOP's to hit the requested processing cycles
-	// TODO: this shouldn't be dynamically counted in the chase_pointers
-	//       method, but rather compiled dynamically?
-	int64 nops = (this->exp->busy_cycles - 1) / 7;
-	// Assembler for loop
-	//   initialize counter						-- 1 initialization instruction
-	//   nop									-\
-	//   add one to counter						 |
-	//   move counter to register				 |
-	//   compare register to upper limit		 | 7 instuctions per iteration
-	//   set compare byte if still less			 |
-	//   test the compare byte					 |
-	//   jump depending on the test output		-/
-	if (nops < 0)
-		nops = 0;
-
 	if (this->exp->iterations <= 0) {
+		// compile benchmark
+		benchmark bench = gen(this->exp->chains_per_thread,
+				this->exp->bytes_per_line, this->exp->bytes_per_chain,
+				this->exp->stride, this->exp->busy_cycles,
+				this->exp->prefetch);
+
 		volatile static double istart = 0;
 		volatile static double istop = 0;
 		volatile static double elapsed = 0;
 		volatile static int64 iters = 1;
 		volatile double bound = max(0.2, 10 * Timer::resolution());
 		for (iters = 1; elapsed <= bound; iters = iters << 1) {
+			// barrier
 			this->bp->barrier();
 
 			// start timer
@@ -136,10 +133,8 @@ int Run::run() {
 			this->bp->barrier();
 
 			// chase pointers
-			run_benchmark(this->exp->chains_per_thread, iters, root,
-					this->exp->bytes_per_line, this->exp->bytes_per_chain,
-					this->exp->stride, nops,
-					this->exp->prefetch);
+			for (int i = 0; i < iters; i++)
+				bench((const Chain**) root);
 
 			// barrier
 			this->bp->barrier();
@@ -166,8 +161,14 @@ int Run::run() {
 #if defined(UNDEFINED)
 #endif
 
-	// barrier
+	// compile benchmark
+	benchmark bench = gen(this->exp->chains_per_thread,
+			this->exp->bytes_per_line, this->exp->bytes_per_chain,
+			this->exp->stride, this->exp->busy_cycles,
+			this->exp->prefetch);
+
 	for (int e = 0; e < this->exp->experiments; e++) {
+		// barrier
 		this->bp->barrier();
 
 		// start timer
@@ -177,9 +178,8 @@ int Run::run() {
 		this->bp->barrier();
 
 		// chase pointers
-		run_benchmark(this->exp->chains_per_thread, this->exp->iterations, root,
-				this->exp->bytes_per_line, this->exp->bytes_per_chain,
-				this->exp->stride, nops, this->exp->prefetch);
+		for (int i = 0; i < this->exp->iterations; i++)
+			bench((const Chain**) root);
 
 		// barrier
 		this->bp->barrier();
@@ -369,594 +369,83 @@ void mem_chk(Chain *m) {
 		dumb_ck += 1;
 }
 
-static void chase_pointers(int64 chains_per_thread, // memory loading per thread
-		int64 iterations, // number of iterations per experiment
-		Chain** root, // root(s) of the chain(s) to follow
+static benchmark chase_pointers(int64 chains_per_thread, // memory loading per thread
 		int64 bytes_per_line, // ignored
 		int64 bytes_per_chain, // ignored
 		int64 stride, // ignored
 		int64 busy_cycles, // processing cycles
 		bool prefetch // prefetch?
 		) {
-	// chase pointers
-	switch (chains_per_thread) {
-	default:
-	case 1:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			do {
-				a = a->next;
-				if (prefetch)
-					prefetch(a->next);
-				asm("nop");
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-				asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-		}
-		break;
-	case 2:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			do {
-				a = a->next;
-				b = b->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-		}
-		break;
-	case 3:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-		}
-		break;
-	case 4:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-		}
-		break;
-	case 5:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-		}
-		break;
-	case 6:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-		}
-		break;
-	case 7:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-		}
-		break;
-	case 8:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			Chain* h = root[7];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				h = h->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-			mem_chk(h);
-		}
-		break;
-	case 9:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			Chain* h = root[7];
-			Chain* j = root[8];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				h = h->next;
-				j = j->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-			mem_chk(h);
-			mem_chk(j);
-		}
-		break;
-	case 10:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			Chain* h = root[7];
-			Chain* j = root[8];
-			Chain* k = root[9];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				h = h->next;
-				j = j->next;
-				k = k->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-			mem_chk(h);
-			mem_chk(j);
-			mem_chk(k);
-		}
-		break;
-	case 11:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			Chain* h = root[7];
-			Chain* j = root[8];
-			Chain* k = root[9];
-			Chain* l = root[10];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				h = h->next;
-				j = j->next;
-				k = k->next;
-				l = l->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-			mem_chk(h);
-			mem_chk(j);
-			mem_chk(k);
-			mem_chk(l);
-		}
-		break;
-	case 12:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			Chain* h = root[7];
-			Chain* j = root[8];
-			Chain* k = root[9];
-			Chain* l = root[10];
-			Chain* m = root[11];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				h = h->next;
-				j = j->next;
-				k = k->next;
-				l = l->next;
-				m = m->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-			mem_chk(h);
-			mem_chk(j);
-			mem_chk(k);
-			mem_chk(l);
-			mem_chk(m);
-		}
-		break;
-	case 13:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			Chain* h = root[7];
-			Chain* j = root[8];
-			Chain* k = root[9];
-			Chain* l = root[10];
-			Chain* m = root[11];
-			Chain* n = root[12];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				h = h->next;
-				j = j->next;
-				k = k->next;
-				l = l->next;
-				m = m->next;
-				n = n->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-			mem_chk(h);
-			mem_chk(j);
-			mem_chk(k);
-			mem_chk(l);
-			mem_chk(m);
-			mem_chk(n);
-		}
-		break;
-	case 14:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			Chain* h = root[7];
-			Chain* j = root[8];
-			Chain* k = root[9];
-			Chain* l = root[10];
-			Chain* m = root[11];
-			Chain* n = root[12];
-			Chain* o = root[13];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				h = h->next;
-				j = j->next;
-				k = k->next;
-				l = l->next;
-				m = m->next;
-				n = n->next;
-				o = o->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-			mem_chk(h);
-			mem_chk(j);
-			mem_chk(k);
-			mem_chk(l);
-			mem_chk(m);
-			mem_chk(n);
-			mem_chk(o);
-		}
-		break;
-	case 15:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			Chain* h = root[7];
-			Chain* j = root[8];
-			Chain* k = root[9];
-			Chain* l = root[10];
-			Chain* m = root[11];
-			Chain* n = root[12];
-			Chain* o = root[13];
-			Chain* p = root[14];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				h = h->next;
-				j = j->next;
-				k = k->next;
-				l = l->next;
-				m = m->next;
-				n = n->next;
-				o = o->next;
-				p = p->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-			mem_chk(h);
-			mem_chk(j);
-			mem_chk(k);
-			mem_chk(l);
-			mem_chk(m);
-			mem_chk(n);
-			mem_chk(o);
-			mem_chk(p);
-		}
-		break;
-	case 16:
-		for (int64 i = 0; i < iterations; i++) {
-			Chain* a = root[0];
-			Chain* b = root[1];
-			Chain* c = root[2];
-			Chain* d = root[3];
-			Chain* e = root[4];
-			Chain* f = root[5];
-			Chain* g = root[6];
-			Chain* h = root[7];
-			Chain* j = root[8];
-			Chain* k = root[9];
-			Chain* l = root[10];
-			Chain* m = root[11];
-			Chain* n = root[12];
-			Chain* o = root[13];
-			Chain* p = root[14];
-			Chain* q = root[15];
-			do {
-				a = a->next;
-				b = b->next;
-				c = c->next;
-				d = d->next;
-				e = e->next;
-				f = f->next;
-				g = g->next;
-				h = h->next;
-				j = j->next;
-				k = k->next;
-				l = l->next;
-				m = m->next;
-				n = n->next;
-				o = o->next;
-				p = p->next;
-				q = q->next;
-				if (prefetch)
-					prefetch(a->next);
-				for (int64 j = 0; j < busy_cycles; j++)
-					asm("nop");
-			} while (a != root[0]);
-			mem_chk(a);
-			mem_chk(b);
-			mem_chk(c);
-			mem_chk(d);
-			mem_chk(e);
-			mem_chk(f);
-			mem_chk(g);
-			mem_chk(h);
-			mem_chk(j);
-			mem_chk(k);
-			mem_chk(l);
-			mem_chk(m);
-			mem_chk(n);
-			mem_chk(o);
-			mem_chk(p);
-			mem_chk(q);
-		}
+	// Create Compiler.
+	AsmJit::Compiler c;
+
+  	// Tell compiler the function prototype we want. It allocates variables representing
+	// function arguments that can be accessed through Compiler or Function instance.
+	c.newFunction(AsmJit::CALL_CONV_DEFAULT, AsmJit::FunctionBuilder1<AsmJit::Void, const Chain**>());
+
+	// Try to generate function without prolog/epilog code:
+	c.getFunction()->setHint(AsmJit::FUNCTION_HINT_NAKED, true);
+
+	// Create labels.
+	AsmJit::Label L_Loop = c.newLabel();
+
+	// Function arguments.
+	AsmJit::GPVar chain(c.argGP(0));
+
+	// Save the head
+	std::vector<AsmJit::GPVar> heads(chains_per_thread);
+	for (int i = 0; i < chains_per_thread; i++) {
+		AsmJit::GPVar head = c.newGP();
+		c.mov(head, ptr(chain));
+		heads[i] = head;
 	}
+
+	// Current position
+	std::vector<AsmJit::GPVar> positions(chains_per_thread);
+	for (int i = 0; i < chains_per_thread; i++) {
+		AsmJit::GPVar position = c.newGP();
+		c.mov(position, heads[0]);
+		positions[i] = position;
+	}
+
+	// Loop.
+	c.bind(L_Loop);
+
+	// Process all links
+	for (int i = 0; i < chains_per_thread; i++) {
+		// Chase pointer
+		c.mov(positions[i], ptr(positions[i], offsetof(Chain, next)));
+
+		// Prefetch next
+		// TODO
+	}
+
+	// Wait
+	for (int i = 0; i < busy_cycles; i++)
+		c.nop();
+
+	// Test if end reached
+	c.cmp(heads[0], positions[0]);
+	c.jne(L_Loop);
+
+	// Finish.
+	c.endFunction();
+
+	// Make JIT function.
+	benchmark fn = AsmJit::function_cast<benchmark>(c.make());
+
+	// Ensure that everything is ok.
+	if (!fn) {
+		printf("Error making jit function (%u).\n", c.getError());
+		return 0;
+	}
+
+	return fn;
 }
 
 // NOT WRITTEN YET -- DMP
 // JUST A PLACE HOLDER!
-Chain*
-Run::stream_mem_init(Chain *mem) {
+Chain* Run::stream_mem_init(Chain *mem) {
 // fprintf(stderr, "made it into stream_mem_init.\n");
 // fprintf(stderr, "chains_per_thread = %ld\n", this->exp->chains_per_thread);
 // fprintf(stderr, "iterations        = %ld\n", this->exp->iterations);
@@ -990,15 +479,15 @@ void sum_chk(double t) {
 
 // NOT WRITTEN YET -- DMP
 // JUST A PLACE HOLDER!
-static void follow_streams(int64 chains_per_thread, // memory loading per thread
-		int64 iterations, // number of iterations per experiment
-		Chain** root, // root(s) of the chain(s) to follow
+static benchmark follow_streams(int64 chains_per_thread, // memory loading per thread
 		int64 bytes_per_line, // ignored
 		int64 bytes_per_chain, // ignored
 		int64 stride, // ignored
 		int64 busy_cycles, // ignored
 		bool prefetch // ignored
 		) {
+	return 0;
+	/*
 	int64 refs_per_line = bytes_per_line / sizeof(double);
 	int64 refs_per_chain = bytes_per_chain / sizeof(double);
 
@@ -1298,4 +787,5 @@ static void follow_streams(int64 chains_per_thread, // memory loading per thread
 		}
 		break;
 	}
+	*/
 }
