@@ -245,8 +245,8 @@ Run::random_mem_init(Chain *mem) {
 	// one pointer from each cache line
 	// within the page.  all pages and
 	// cache lines are chosen at random.
-	Chain* root = END_OF_CHAIN;
-	Chain* prev = END_OF_CHAIN;
+	Chain* root = 0;
+	Chain* prev = 0;
 	int link_within_line = 0;
 	int64 local_ops_per_chain = 0;
 
@@ -275,7 +275,7 @@ Run::random_mem_init(Chain *mem) {
 					+ line_within_page * this->exp->links_per_line
 					+ link_within_line;
 
-			if (root == END_OF_CHAIN) {
+			if (root == 0) {
 //		printf("root       = %d(%d)[0x%x].\n", page, line_within_page, mem+link);
 				prev = root = mem + link;
 				local_ops_per_chain += 1;
@@ -288,6 +288,8 @@ Run::random_mem_init(Chain *mem) {
 		}
 	}
 
+	prev->next = root;
+
 	Run::global_mutex.lock();
 	Run::_ops_per_chain = local_ops_per_chain;
 	Run::global_mutex.unlock();
@@ -297,8 +299,8 @@ Run::random_mem_init(Chain *mem) {
 
 Chain*
 Run::forward_mem_init(Chain *mem) {
-	Chain* root = END_OF_CHAIN;
-	Chain* prev = END_OF_CHAIN;
+	Chain* root = 0;
+	Chain* prev = 0;
 	int link_within_line = 0;
 	int64 local_ops_per_chain = 0;
 
@@ -316,6 +318,8 @@ Run::forward_mem_init(Chain *mem) {
 		}
 	}
 
+	prev->next = root;
+
 	Run::global_mutex.lock();
 	Run::_ops_per_chain = local_ops_per_chain;
 	Run::global_mutex.unlock();
@@ -325,8 +329,8 @@ Run::forward_mem_init(Chain *mem) {
 
 Chain*
 Run::reverse_mem_init(Chain *mem) {
-	Chain* root = END_OF_CHAIN;
-	Chain* prev = END_OF_CHAIN;
+	Chain* root = 0;
+	Chain* prev = 0;
 	int link_within_line = 0;
 	int64 local_ops_per_chain = 0;
 
@@ -338,7 +342,7 @@ Run::reverse_mem_init(Chain *mem) {
 
 	for (int i = last; 0 <= i; i -= stride) {
 		int link = i * this->exp->links_per_line + link_within_line;
-		if (root == END_OF_CHAIN) {
+		if (root == 0) {
 //	    printf("root       = %d(%d)[0x%x].\n", page, line_within_page, mem+link);
 			prev = root = mem + link;
 			local_ops_per_chain += 1;
@@ -350,6 +354,8 @@ Run::reverse_mem_init(Chain *mem) {
 		}
 	}
 
+	prev->next = root;
+
 	Run::global_mutex.lock();
 	Run::_ops_per_chain = local_ops_per_chain;
 	Run::global_mutex.unlock();
@@ -359,7 +365,7 @@ Run::reverse_mem_init(Chain *mem) {
 
 static int64 dumb_ck = 0;
 void mem_chk(Chain *m) {
-	if (m == END_OF_CHAIN)
+	if (m == 0)
 		dumb_ck += 1;
 }
 
@@ -378,7 +384,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 	case 1:
 		for (int64 i = 0; i < iterations; i++) {
 			Chain* a = root[0];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				if (prefetch)
 					prefetch(a->next);
@@ -386,7 +392,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
 				asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 		}
 		break;
@@ -394,14 +400,14 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 		for (int64 i = 0; i < iterations; i++) {
 			Chain* a = root[0];
 			Chain* b = root[1];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				if (prefetch)
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 		}
@@ -411,7 +417,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* a = root[0];
 			Chain* b = root[1];
 			Chain* c = root[2];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -419,7 +425,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -431,7 +437,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* b = root[1];
 			Chain* c = root[2];
 			Chain* d = root[3];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -440,7 +446,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -454,7 +460,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* c = root[2];
 			Chain* d = root[3];
 			Chain* e = root[4];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -464,7 +470,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -480,7 +486,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* d = root[3];
 			Chain* e = root[4];
 			Chain* f = root[5];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -491,7 +497,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -509,7 +515,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* e = root[4];
 			Chain* f = root[5];
 			Chain* g = root[6];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -521,7 +527,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -541,7 +547,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* f = root[5];
 			Chain* g = root[6];
 			Chain* h = root[7];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -554,7 +560,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -576,7 +582,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* g = root[6];
 			Chain* h = root[7];
 			Chain* j = root[8];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -590,7 +596,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -614,7 +620,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* h = root[7];
 			Chain* j = root[8];
 			Chain* k = root[9];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -629,7 +635,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -655,7 +661,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* j = root[8];
 			Chain* k = root[9];
 			Chain* l = root[10];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -671,7 +677,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -699,7 +705,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* k = root[9];
 			Chain* l = root[10];
 			Chain* m = root[11];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -716,7 +722,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -746,7 +752,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* l = root[10];
 			Chain* m = root[11];
 			Chain* n = root[12];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -764,7 +770,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -796,7 +802,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* m = root[11];
 			Chain* n = root[12];
 			Chain* o = root[13];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -815,7 +821,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -849,7 +855,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* n = root[12];
 			Chain* o = root[13];
 			Chain* p = root[14];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -869,7 +875,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);
@@ -905,7 +911,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 			Chain* o = root[13];
 			Chain* p = root[14];
 			Chain* q = root[15];
-			while (a != END_OF_CHAIN) {
+			do {
 				a = a->next;
 				b = b->next;
 				c = c->next;
@@ -926,7 +932,7 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 					prefetch(a->next);
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
-			}
+			} while (a != root[0]);
 			mem_chk(a);
 			mem_chk(b);
 			mem_chk(c);

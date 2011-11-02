@@ -12,17 +12,9 @@
 #if !defined(Chain_h)
 #define Chain_h
 
-class Chain {
-public:
-	Chain();
-	Chain(Chain* end);
-	~Chain();
+struct Chain {
 	Chain* next;
-
-	static Chain* END();
 private:
 };
-
-static Chain* END_OF_CHAIN = Chain::END();
 
 #endif

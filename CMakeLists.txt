@@ -18,8 +18,6 @@ option(USE_LIBNUMA "Build against NUMA libraries" ON)
 # Code compilation
 #
 
-add_library(Chain src/Chain.h src/Chain.cpp)
-
 add_library(Experiment src/Experiment.h src/Experiment.cpp)
 
 add_library(Thread src/Thread.h src/Thread.cpp)
@@ -29,7 +27,7 @@ add_library(Lock src/Lock.h src/Lock.cpp)
 add_library(Output src/Output.h src/Output.cpp)
 
 add_library(Run src/Run.h src/Run.cpp)
-target_link_libraries(Run Lock Chain Thread)
+target_link_libraries(Run Lock Thread)
 
 add_library(SpinBarrier src/SpinBarrier.h src/SpinBarrier.cpp)
 
