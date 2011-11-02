@@ -1,0 +1,12 @@
+About
+-----
+
+pChase is a memory performance benchmark written by Doug Pase. It can tell you both the latency and bandwidth of different access patterns, for various levels of cache and for main memory. The access patterns may have a constant stride or completely random. The benchmark gets its name from the fact that it chases pointers in memory. Chasing pointers ensures that we actually measure the latency and bandwidth of memory references, as the next reference cannot be generated until the contents of the pointer are actually retrieved. Other benchmark approaches (for example, STREAM) can often generate addresses arithmetically, which may measure memory bandwidth but not latency.
+
+The conceptual model for this benchmark is that memory is divided into hierarchies, including the cache line, DRAM page and memory pool within a NUMA domain (here called a "chain"). The size of each level in the hierarchy can be specified when the benchmark is run. The benchmark progresses by selecting a page to reference. Within a selected page all cache lines are referenced before the next page is selected. One iteration walks through all pages within a chain. One experiment walks through a chain for a specified number of iterations.
+
+Cache lines may be selected in random order or by using a constant stride. Strided access may be forward (increasing addresses) or reverse (decreasing addresses). When the access is random, the page selection is also random. When the access is strided, the next contiguous page is selected in the direction of the stride.
+
+An experiment may specify the number of threads that access memory concurrently. This is useful in establishing contention between different paths to memory within a system. In a NUMA architecture, the contention between threads should be minimal when each thread accesses only its own local memory. However, in SMP and multi-core architectures, two threads may share a path to memory, causing contention for the shared path.
+
+An experiment may also specify the number of concurrent references that is allowed per thread. This allows the benchmark to load up the memory paths with references, showing more accurately what the sustainable throughput of the system may be. Two references per chain indicates that two memory fetches will take place concurrently from the same thread. This is different than two references taking place concurrently in separate threads, as the memory paths and the effect on resource usage will be different.
