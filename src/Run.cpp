@@ -44,8 +44,6 @@ Lock Run::global_mutex;
 int64 Run::_ops_per_chain = 0;
 double Run::_seconds = 1E9;
 
-#define prefetch(x) __builtin_prefetch(x)
-
 Run::Run() :
 		exp(NULL), bp(NULL) {
 }
@@ -361,12 +359,6 @@ Run::reverse_mem_init(Chain *mem) {
 	Run::global_mutex.unlock();
 
 	return root;
-}
-
-static int64 dumb_ck = 0;
-void mem_chk(Chain *m) {
-	if (m == 0)
-		dumb_ck += 1;
 }
 
 static benchmark chase_pointers(int64 chains_per_thread, // memory loading per thread
