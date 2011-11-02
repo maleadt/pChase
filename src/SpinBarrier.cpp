@@ -21,10 +21,21 @@
  *  void barrier()                                                            *
  *                                                                            *
  ******************************************************************************/
-#include <stdio.h>
-#include <pthread.h>
 
+//
+// Configuration
+//
+
+// Implementation header
 #include "SpinBarrier.h"
+
+// System includes
+#include <cstdio>
+
+
+//
+// Implementation
+//
 
 // create a new barrier
 SpinBarrier::SpinBarrier(int participants) :

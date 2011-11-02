@@ -9,11 +9,22 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
+//
+// Configuration
+//
+
+// Include guard
 #if !defined(Experiment_h)
 #define Experiment_h
 
+// Local includes
 #include "Chain.h"
 #include "Types.h"
+
+
+//
+// Class definition
+//
 
 class Experiment {
 public:

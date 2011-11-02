@@ -9,8 +9,18 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
+//
+// Configuration
+//
+
+// Include guard
 #if !defined(Chain_h)
 #define Chain_h
+
+
+//
+// Struct definition
+//
 
 struct Chain {
 	Chain* next;

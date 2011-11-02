@@ -36,8 +36,6 @@ add_library(SpinBarrier src/SpinBarrier.h src/SpinBarrier.cpp)
 
 add_library(Timer src/Timer.h src/Timer.cpp)
 
-add_library(Types src/Types.h src/Types.cpp)
-
 add_executable (chase src/Main.cpp)
 target_link_libraries(chase Run Timer Output Experiment SpinBarrier)
 target_link_libraries(chase ${CMAKE_THREAD_LIBS_INIT})

@@ -9,16 +9,26 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
+//
+// Configuration
+//
+
+// Include guard
 #if !defined(Run_h)
 #define Run_h
 
+// Local includes
 #include "Thread.h"
-
 #include "Lock.h"
 #include "Chain.h"
 #include "Types.h"
 #include "Experiment.h"
 #include "SpinBarrier.h"
+
+
+//
+// Class definition
+//
 
 class Run: public Thread {
 public:

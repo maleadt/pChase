@@ -9,10 +9,22 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
+//
+// Configuration
+//
+
+
+// Include guard
 #if !defined(Lock_h)
 #define Lock_h
 
+// System includes
 #include <pthread.h>
+
+
+//
+// Class definition
+//
 
 class Lock {
 public:

@@ -9,8 +9,14 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-#include <stdio.h>
+//
+// Configuration
+//
 
+// System includes
+#include <cstdio>
+
+// Local includes
 #include "Run.h"
 #include "Timer.h"
 #include "Types.h"
@@ -47,6 +53,11 @@
 // Depending on compile-time options,
 // pointers may be 32-bit or 64-bit
 // pointers.
+
+
+//
+// Implementation
+//
 
 int verbose = 0;
 

@@ -9,16 +9,25 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-#include <stdio.h>
+//
+// Configuration
+//
+
+// Implementation header
+#include "Thread.h"
+
+// System includes
+#include <cstdio>
 #include <pthread.h>
 #include <unistd.h>
 
-#include "Thread.h"
-
-#include "Lock.h"
-
 Lock Thread::_global_lock;
 int Thread::count = 0;
+
+
+//
+// Implementation
+//
 
 Thread::Thread() {
 	Thread::global_lock();

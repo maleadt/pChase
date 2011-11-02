@@ -9,14 +9,22 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
+//
+// Configuration
+//
+
+// Implementation header
+#include "Output.h"
+
+// System includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "Output.h"
 
-#include "Types.h"
-#include "Experiment.h"
+//
+// Implementation
+//
 
 void Output::print(Experiment &e, int64 ops, double secs, double ck_res) {
 	if (e.output_mode == Experiment::CSV) {

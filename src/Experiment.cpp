@@ -9,17 +9,26 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
+//
+// Configuration
+//
 
+// Implementation header
+#include "Experiment.h"
+
+// System includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #if defined(NUMA)
 #include <numa.h>
 #endif
 
-#include "Experiment.h"
+
+//
+// Implementation
+//
 
 Experiment::Experiment() :
     strict           (0),

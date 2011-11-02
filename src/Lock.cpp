@@ -9,10 +9,20 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-#include <stdio.h>
-#include <pthread.h>
+//
+// Configuration
+//
 
+// Implementation header
 #include "Lock.h"
+
+// System includes
+#include <cstdio>
+
+
+//
+// Implementation
+//
 
 Lock::Lock() {
 	pthread_mutex_init(&(this->mutex), NULL);

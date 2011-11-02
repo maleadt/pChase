@@ -9,23 +9,31 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stddef.h>
-#include <vector>
+//
+// Configuration
+//
 
+// Implementation header
+#include "Run.h"
+
+// System includes
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#include <cstddef>
+#include <vector>
 #if defined(NUMA)
 #include <numa.h>
 #endif
 
-#include "Run.h"
-
+// Local includes
 #include <AsmJit/AsmJit.h>
-
-#include "Chain.h"
 #include "Timer.h"
-#include "SpinBarrier.h"
+
+
+//
+// Implementation
+//
 
 static double max(double v1, double v2);
 static double min(double v1, double v2);

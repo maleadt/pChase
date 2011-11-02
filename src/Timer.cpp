@@ -9,12 +9,16 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
-#include <stdio.h>
-#include <sys/time.h>
+//
+// Configuration
+//
 
+// Implementation header
 #include "Timer.h"
 
-#include "Types.h"
+// System includes
+#include <cstdio>
+#include <sys/time.h>
 
 static int64 read_rtc();
 static void calibrate_rtc(int n);
@@ -29,6 +33,11 @@ static double time_factor = -1;
 #if !defined(RTC) && !defined(GTOD)
 #define RTC
 #endif
+
+
+//
+// Implementation
+//
 
 #if defined(RTC)
 

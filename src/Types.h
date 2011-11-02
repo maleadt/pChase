@@ -9,8 +9,18 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
+//
+// Configuration
+//
+
+// Include guard
 #if !defined(Types_h)
 #define Types_h
+
+
+//
+// Type definitions
+//
 
 typedef long long int64;
 typedef int int32;

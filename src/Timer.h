@@ -9,10 +9,21 @@
  *    Douglas M. Pase - initial API and implementation                         *
  *******************************************************************************/
 
+//
+// Configuration
+//
+
+// Include guard
 #if !defined(Timer_h)
 #define Timer_h
 
+// Local includes
 #include "Types.h"
+
+
+//
+// Class definition
+//
 
 class Timer {
 public:

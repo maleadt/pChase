@@ -23,10 +23,17 @@
  *                                                                            *
  ******************************************************************************/
 
+// Include guard
 #if !defined( SpinBarrier_h )
 #define SpinBarrier_h
 
+// System includes
 #include <pthread.h>
+
+
+//
+// Class definition
+//
 
 class SpinBarrier {
 public:
