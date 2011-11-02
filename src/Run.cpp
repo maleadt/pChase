@@ -104,6 +104,22 @@ int Run::run() {
 		}
 	}
 
+	// Calculate the amount of NOP's to hit the requested processing cycles
+	// TODO: this shouldn't be dynamically counted in the chase_pointers
+	//       method, but rather compiled dynamically?
+	int64 nops = (this->exp->busy_cycles - 1) / 7;
+	// Assembler for loop
+	//   initialize counter						-- 1 initialization instruction
+	//   nop									-\
+	//   add one to counter						 |
+	//   move counter to register				 |
+	//   compare register to upper limit		 | 7 instuctions per iteration
+	//   set compare byte if still less			 |
+	//   test the compare byte					 |
+	//   jump depending on the test output		-/
+	if (nops < 0)
+		nops = 0;
+
 	if (this->exp->iterations <= 0) {
 		volatile static double istart = 0;
 		volatile static double istop = 0;
@@ -122,7 +138,7 @@ int Run::run() {
 			// chase pointers
 			run_benchmark(this->exp->chains_per_thread, iters, root,
 					this->exp->bytes_per_line, this->exp->bytes_per_chain,
-					this->exp->stride, this->exp->busy_cycles,
+					this->exp->stride, nops,
 					this->exp->prefetch);
 
 			// barrier
@@ -163,7 +179,7 @@ int Run::run() {
 		// chase pointers
 		run_benchmark(this->exp->chains_per_thread, this->exp->iterations, root,
 				this->exp->bytes_per_line, this->exp->bytes_per_chain,
-				this->exp->stride, this->exp->busy_cycles, this->exp->prefetch);
+				this->exp->stride, nops, this->exp->prefetch);
 
 		// barrier
 		this->bp->barrier();
@@ -214,7 +230,7 @@ static double min(double v1, double v2) {
 	return v1;
 }
 
-// exclude 2 and mersienne primes, i.e.,
+// exclude 2 and Mersenne primes, i.e.,
 // primes of the form 2**n - 1, e.g.,
 // 3, 7, 31, 127
 static const int prime_table[] = { 5, 11, 13, 17, 19, 23, 37, 41, 43, 47, 53,
@@ -366,8 +382,10 @@ static void chase_pointers(int64 chains_per_thread, // memory loading per thread
 				a = a->next;
 				if (prefetch)
 					prefetch(a->next);
+				asm("nop");
 				for (int64 j = 0; j < busy_cycles; j++)
 					asm("nop");
+				asm("nop");
 			}
 			mem_chk(a);
 		}
