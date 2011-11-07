@@ -17,11 +17,11 @@
 #include <cstdio>
 
 // Local includes
-#include "Run.h"
-#include "Timer.h"
-#include "Types.h"
-#include "Output.h"
-#include "Experiment.h"
+#include "run.h"
+#include "timer.h"
+#include "types.h"
+#include "output.h"
+#include "experiment.h"
 
 // This program allocates and accesses
 // a number of blocks of memory, one or more

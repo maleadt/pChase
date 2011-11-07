@@ -17,34 +17,38 @@
  *                                                                            *
  * Date:    September 21, 2000                                                *
  *          Translated to C++, June 19, 2005                                  *
- *          Rewritten August 13,2005                                          *
  *                                                                            *
  *  void barrier()                                                            *
  *                                                                            *
  ******************************************************************************/
 
-// Include guard
-#if !defined( SpinBarrier_h )
-#define SpinBarrier_h
+//
+// Configuration
+//
+
+// Implementation header
+#include "spinbarrier.h"
 
 // System includes
-#include <pthread.h>
+#include <cstdio>
 
 
 //
-// Class definition
+// Implementation
 //
 
-class SpinBarrier {
-public:
-	SpinBarrier(int participants);
-	~SpinBarrier();
+// create a new barrier
+SpinBarrier::SpinBarrier(int participants) :
+		limit(participants) {
+	pthread_barrier_init(&barrier_obj, NULL, this->limit);
+}
 
-	void barrier();
+// destroy an old barrier
+SpinBarrier::~SpinBarrier() {
+}
 
-private:
-	int limit; // number of barrier participants
-	pthread_barrier_t barrier_obj;
-};
-
-#endif
+// enter the barrier and wait.  everyone leaves
+// when the last participant enters the barrier.
+void SpinBarrier::barrier() {
+	pthread_barrier_wait(&this->barrier_obj);
+}

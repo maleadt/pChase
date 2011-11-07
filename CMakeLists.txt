@@ -21,23 +21,23 @@ add_subdirectory(lib/AsmJit)
 # Code compilation
 #
 
-add_library(Experiment src/Experiment.h src/Experiment.cpp)
+add_library(experiment src/experiment.h src/experiment.cpp)
 
-add_library(Thread src/Thread.h src/Thread.cpp)
+add_library(thread src/thread.h src/thread.cpp)
 
-add_library(Lock src/Lock.h src/Lock.cpp)
+add_library(lock src/lock.h src/lock.cpp)
 
-add_library(Output src/Output.h src/Output.cpp)
+add_library(output src/output.h src/output.cpp)
 
-add_library(Run src/Run.h src/Run.cpp)
-target_link_libraries(Run Lock Thread)
+add_library(run src/run.h src/run.cpp)
+target_link_libraries(run lock thread)
 
-add_library(SpinBarrier src/SpinBarrier.h src/SpinBarrier.cpp)
+add_library(spinbarrier src/spinbarrier.h src/spinbarrier.cpp)
 
-add_library(Timer src/Timer.h src/Timer.cpp)
+add_library(timer src/timer.h src/timer.cpp)
 
-add_executable (chase src/Main.cpp)
-target_link_libraries(chase Run Timer Output Experiment SpinBarrier)
+add_executable (chase src/main.cpp)
+target_link_libraries(chase run timer output experiment spinbarrier)
 target_link_libraries(chase ${CMAKE_THREAD_LIBS_INIT})
 if (USE_LIBNUMA)
 	if(LIBNUMA)

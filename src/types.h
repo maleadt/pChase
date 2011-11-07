@@ -13,34 +13,26 @@
 // Configuration
 //
 
-// Implementation header
-#include "Lock.h"
-
-// System includes
-#include <cstdio>
+// Include guard
+#if !defined(TYPES_H)
+#define TYPES_H
 
 
 //
-// Implementation
+// Type definitions
 //
 
-Lock::Lock() {
-	pthread_mutex_init(&(this->mutex), NULL);
-}
+typedef long long int64;
+typedef int int32;
+typedef short int16;
+typedef char int8;
 
-Lock::~Lock() {
-	pthread_mutex_destroy(&(this->mutex));
-}
+typedef unsigned long long uint64;
+typedef unsigned int uint32;
+typedef unsigned short uint16;
+typedef unsigned char uint8;
 
-void Lock::lock() {
-	pthread_mutex_lock(&(this->mutex));
-}
+typedef double float64;
+typedef float float32;
 
-int Lock::test() {
-	pthread_mutex_trylock(&(this->mutex));
-}
-
-void Lock::unlock() {
-	pthread_mutex_unlock(&(this->mutex));
-}
-
+#endif

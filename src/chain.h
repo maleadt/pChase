@@ -14,25 +14,16 @@
 //
 
 // Include guard
-#if !defined(Output_h)
-#define Output_h
-
-// Local includes
-#include "Types.h"
-#include "Experiment.h"
+#if !defined(CHAIN_H)
+#define CHAIN_H
 
 
 //
-// Class definition
+// Struct definition
 //
 
-class Output {
-public:
-	static void print(Experiment &e, int64 ops, double secs, double ck_res);
-	static void header(Experiment &e, int64 ops, double secs, double ck_res);
-	static void csv(Experiment &e, int64 ops, double secs, double ck_res);
-	static void table(Experiment &e, int64 ops, double secs, double ck_res);
-private:
+struct Chain {
+	Chain* next;
 };
 
 #endif

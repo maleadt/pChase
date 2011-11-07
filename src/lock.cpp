@@ -13,26 +13,34 @@
 // Configuration
 //
 
-// Include guard
-#if !defined(Timer_h)
-#define Timer_h
+// Implementation header
+#include "lock.h"
 
-// Local includes
-#include "Types.h"
+// System includes
+#include <cstdio>
 
 
 //
-// Class definition
+// Implementation
 //
 
-class Timer {
-public:
-	static double seconds();
-	static double resolution();
-	static int64 ticks();
-	static void calibrate();
-	static void calibrate(int n);
-private:
-};
+Lock::Lock() {
+	pthread_mutex_init(&(this->mutex), NULL);
+}
 
-#endif
+Lock::~Lock() {
+	pthread_mutex_destroy(&(this->mutex));
+}
+
+void Lock::lock() {
+	pthread_mutex_lock(&(this->mutex));
+}
+
+int Lock::test() {
+	pthread_mutex_trylock(&(this->mutex));
+}
+
+void Lock::unlock() {
+	pthread_mutex_unlock(&(this->mutex));
+}
+

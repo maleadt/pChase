@@ -14,49 +14,27 @@
 //
 
 // Include guard
-#if !defined(Run_h)
-#define Run_h
+#if !defined(LOCK_H)
+#define LOCK_H
 
-// Local includes
-#include "Thread.h"
-#include "Lock.h"
-#include "Chain.h"
-#include "Types.h"
-#include "Experiment.h"
-#include "SpinBarrier.h"
+// System includes
+#include <pthread.h>
 
 
 //
 // Class definition
 //
 
-class Run: public Thread {
+class Lock {
 public:
-	Run();
-	~Run();
-	int run();
-	void set(Experiment &e, SpinBarrier* sbp);
-
-	static int64 ops_per_chain() {
-		return _ops_per_chain;
-	}
-	static double seconds() {
-		return _seconds;
-	}
+	Lock();
+	~Lock();
+	void lock();
+	int test();
+	void unlock();
 
 private:
-	Experiment* exp; // experiment data
-	SpinBarrier* bp; // spin barrier used by all threads
-
-	void mem_check(Chain *m);
-	Chain* random_mem_init(Chain *m);
-	Chain* forward_mem_init(Chain *m);
-	Chain* reverse_mem_init(Chain *m);
-	Chain* stream_mem_init(Chain *m);
-
-	static Lock global_mutex; // global lock
-	static int64 _ops_per_chain; // total number of operations per chain
-	static double _seconds; // total number of seconds
+	pthread_mutex_t mutex;
 };
 
 #endif

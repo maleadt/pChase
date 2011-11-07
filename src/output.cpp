@@ -14,7 +14,7 @@
 //
 
 // Implementation header
-#include "Output.h"
+#include "output.h"
 
 // System includes
 #include <stdio.h>

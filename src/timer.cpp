@@ -14,7 +14,7 @@
 //
 
 // Implementation header
-#include "Timer.h"
+#include "timer.h"
 
 // System includes
 #include <cstdio>

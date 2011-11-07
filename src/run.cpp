@@ -14,7 +14,7 @@
 //
 
 // Implementation header
-#include "Run.h"
+#include "run.h"
 
 // System includes
 #include <cstdio>
@@ -28,7 +28,7 @@
 
 // Local includes
 #include <AsmJit/AsmJit.h>
-#include "Timer.h"
+#include "timer.h"
 
 
 //

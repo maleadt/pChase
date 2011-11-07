@@ -14,16 +14,25 @@
 //
 
 // Include guard
-#if !defined(Chain_h)
-#define Chain_h
+#if !defined(TIMER_H)
+#define TIMER_H
+
+// Local includes
+#include "types.h"
 
 
 //
-// Struct definition
+// Class definition
 //
 
-struct Chain {
-	Chain* next;
+class Timer {
+public:
+	static double seconds();
+	static double resolution();
+	static int64 ticks();
+	static void calibrate();
+	static void calibrate(int n);
+private:
 };
 
 #endif

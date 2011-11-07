@@ -13,29 +13,56 @@
 // Configuration
 //
 
-
 // Include guard
-#if !defined(Lock_h)
-#define Lock_h
+#if !defined(THREAD_H)
+#define THREAD_H
 
 // System includes
 #include <pthread.h>
+
+// Local includes
+#include "lock.h"
 
 
 //
 // Class definition
 //
 
-class Lock {
+class Thread {
 public:
-	Lock();
-	~Lock();
+	Thread();
+	~Thread();
+
+	virtual int run() = 0;
+
+	int start();
+	int wait();
+	int thread_count() {
+		return Thread::count;
+	}
+	int thread_id() {
+		return id;
+	}
+
+	static void exit();
+
+protected:
 	void lock();
-	int test();
 	void unlock();
+	static void global_lock();
+	static void global_unlock();
 
 private:
-	pthread_mutex_t mutex;
+	static void* start_routine(void *);
+	static Lock _global_lock;
+
+	Lock object_lock;
+
+	pthread_t thread;
+
+	static int count;
+	int id;
+	int lock_obj;
 };
 
 #endif

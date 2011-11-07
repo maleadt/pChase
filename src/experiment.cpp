@@ -14,7 +14,7 @@
 //
 
 // Implementation header
-#include "Experiment.h"
+#include "experiment.h"
 
 // System includes
 #include <stdio.h>
@@ -24,6 +24,9 @@
 #if defined(NUMA)
 #include <numa.h>
 #endif
+
+// Local includes
+#include "chain.h"
 
 
 //
@@ -633,8 +636,6 @@ void Experiment::alloc_map() {
 	this->bytes_per_thread = this->bytes_per_chain * this->chains_per_thread;
 	this->bytes_per_test = this->bytes_per_thread * this->num_threads;
 }
-
-#include "Chain.h"
 
 void Experiment::print() {
 	printf("strict            = %d\n", strict);

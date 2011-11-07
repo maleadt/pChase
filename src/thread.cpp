@@ -13,56 +13,65 @@
 // Configuration
 //
 
-// Include guard
-#if !defined(Thread_h)
-#define Thread_h
+// Implementation header
+#include "thread.h"
 
 // System includes
+#include <cstdio>
 #include <pthread.h>
+#include <unistd.h>
 
-// Local includes
-#include "Lock.h"
+Lock Thread::_global_lock;
+int Thread::count = 0;
 
 
 //
-// Class definition
+// Implementation
 //
 
-class Thread {
-public:
-	Thread();
-	~Thread();
+Thread::Thread() {
+	Thread::global_lock();
+	this->id = Thread::count;
+	Thread::count += 1;
+	Thread::global_unlock();
+}
 
-	virtual int run() = 0;
+Thread::~Thread() {
+}
 
-	int start();
-	int wait();
-	int thread_count() {
-		return Thread::count;
-	}
-	int thread_id() {
-		return id;
-	}
+int Thread::start() {
+	return pthread_create(&this->thread, NULL, Thread::start_routine, this);
+}
 
-	static void exit();
+void*
+Thread::start_routine(void* p) {
+	((Thread*) p)->run();
 
-protected:
-	void lock();
-	void unlock();
-	static void global_lock();
-	static void global_unlock();
+	return NULL;
+}
 
-private:
-	static void* start_routine(void *);
-	static Lock _global_lock;
+void Thread::exit() {
+	pthread_exit(NULL);
+}
 
-	Lock object_lock;
+int Thread::wait() {
+	pthread_join(this->thread, NULL);
 
-	pthread_t thread;
+	return 0;
+}
 
-	static int count;
-	int id;
-	int lock_obj;
-};
+void Thread::lock() {
+	this->object_lock.lock();
+}
 
-#endif
+void Thread::unlock() {
+	this->object_lock.unlock();
+}
+
+void Thread::global_lock() {
+	Thread::_global_lock.lock();
+}
+
+void Thread::global_unlock() {
+	Thread::_global_lock.unlock();
+}

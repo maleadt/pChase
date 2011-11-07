@@ -14,12 +14,12 @@
 //
 
 // Include guard
-#if !defined(Experiment_h)
-#define Experiment_h
+#if !defined(EXPERIMENT_H)
+#define EXPERIMENT_H
 
 // Local includes
-#include "Chain.h"
-#include "Types.h"
+#include "chain.h"
+#include "types.h"
 
 
 //

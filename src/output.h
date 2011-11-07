@@ -14,25 +14,25 @@
 //
 
 // Include guard
-#if !defined(Types_h)
-#define Types_h
+#if !defined(OUTPUT_H)
+#define OUTPUT_H
+
+// Local includes
+#include "types.h"
+#include "experiment.h"
 
 
 //
-// Type definitions
+// Class definition
 //
 
-typedef long long int64;
-typedef int int32;
-typedef short int16;
-typedef char int8;
-
-typedef unsigned long long uint64;
-typedef unsigned int uint32;
-typedef unsigned short uint16;
-typedef unsigned char uint8;
-
-typedef double float64;
-typedef float float32;
+class Output {
+public:
+	static void print(Experiment &e, int64 ops, double secs, double ck_res);
+	static void header(Experiment &e, int64 ops, double secs, double ck_res);
+	static void csv(Experiment &e, int64 ops, double secs, double ck_res);
+	static void table(Experiment &e, int64 ops, double secs, double ck_res);
+private:
+};
 
 #endif
