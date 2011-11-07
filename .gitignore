@@ -1,0 +1,20 @@
+*~
+
+# CMake rules
+CMakeFiles
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+
+# Build files
+*.a
+*.so
+chase
+
+# GDB files
+core
+
+# Eclipse files
+.cproject
+.project
+
