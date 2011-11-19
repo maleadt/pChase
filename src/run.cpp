@@ -373,8 +373,8 @@ static benchmark chase_pointers(int64 chains_per_thread, // memory loading per t
 		int64 bytes_per_line, // ignored
 		int64 bytes_per_chain, // ignored
 		int64 stride, // ignored
-		int64 loop_length, // processing cycles
-		bool prefetch // prefetch?
+		int64 loop_length, // length of the inner loop
+		bool prefetch // prefetch
 		) {
 	// Create Compiler.
 	AsmJit::Compiler c;
