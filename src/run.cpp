@@ -40,13 +40,13 @@ static double min(double v1, double v2);
 typedef void (*benchmark)(const Chain**);
 typedef benchmark (*generator)(int64 chains_per_thread,
 		int64 bytes_per_line, int64 bytes_per_chain,
-		int64 stride, int64 loop_length, bool prefetch);
+		int64 stride, int64 loop_length, int32 prefetch_hint);
 static benchmark chase_pointers(int64 chains_per_thread,
 		int64 bytes_per_line, int64 bytes_per_chain,
-		int64 stride, int64 loop_length, bool prefetch);
+		int64 stride, int64 loop_length, int32 prefetch_hint);
 static benchmark follow_streams(int64 chains_per_thread,
 		int64 bytes_per_line, int64 bytes_per_chain,
-		int64 stride, int64 loop_length, bool prefetch);
+		int64 stride, int64 loop_length, int32 prefetch_hint);
 
 Lock Run::global_mutex;
 int64 Run::_ops_per_chain = 0;
@@ -121,7 +121,7 @@ int Run::run() {
 		benchmark bench = gen(this->exp->chains_per_thread,
 				this->exp->bytes_per_line, this->exp->bytes_per_chain,
 				this->exp->stride, this->exp->loop_length,
-				this->exp->prefetch);
+				this->exp->prefetch_hint);
 
 		volatile static double istart = 0;
 		volatile static double istop = 0;
@@ -171,7 +171,7 @@ int Run::run() {
 	benchmark bench = gen(this->exp->chains_per_thread,
 			this->exp->bytes_per_line, this->exp->bytes_per_chain,
 			this->exp->stride, this->exp->loop_length,
-			this->exp->prefetch);
+			this->exp->prefetch_hint);
 
 	for (int e = 0; e < this->exp->experiments; e++) {
 		// barrier
@@ -374,7 +374,7 @@ static benchmark chase_pointers(int64 chains_per_thread, // memory loading per t
 		int64 bytes_per_chain, // ignored
 		int64 stride, // ignored
 		int64 loop_length, // length of the inner loop
-		bool prefetch // prefetch
+		int32 prefetch_hint // use of prefetching
 		) {
 	// Create Compiler.
 	AsmJit::Compiler c;
@@ -417,8 +417,25 @@ static benchmark chase_pointers(int64 chains_per_thread, // memory loading per t
 		c.mov(positions[i], ptr(positions[i], offsetof(Chain, next)));
 
 		// Prefetch next
-		if (prefetch)
+		switch (prefetch_hint)
+		{
+		case Experiment::T0:
 			c.prefetch(ptr(positions[i]), AsmJit::PREFETCH_T0);
+			break;
+		case Experiment::T1:
+			c.prefetch(ptr(positions[i]), AsmJit::PREFETCH_T1);
+			break;
+		case Experiment::T2:
+			c.prefetch(ptr(positions[i]), AsmJit::PREFETCH_T2);
+			break;
+		case Experiment::NTA:
+			c.prefetch(ptr(positions[i]), AsmJit::PREFETCH_NTA);
+			break;
+		case Experiment::NONE:
+		default:
+			break;
+
+		}
 	}
 
 	// Wait
@@ -485,7 +502,7 @@ static benchmark follow_streams(int64 chains_per_thread, // memory loading per t
 		int64 bytes_per_chain, // ignored
 		int64 stride, // ignored
 		int64 loop_length, // ignored
-		bool prefetch // ignored
+		int32 prefetch_hint // ignored
 		) {
 	return 0;
 	/*

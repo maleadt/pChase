@@ -53,7 +53,7 @@ Experiment::Experiment() :
     seconds          (DEFAULT_SECONDS),
     iterations       (DEFAULT_ITERATIONS),
     experiments      (DEFAULT_EXPERIMENTS),
-    prefetch         (DEFAULT_PREFETCH),
+    prefetch_hint    (NONE),
     output_mode      (TABLE),
     access_pattern   (RANDOM),
     stride           (1),
@@ -80,7 +80,7 @@ Experiment::~Experiment() {
 // -i or --iters            iterations
 // -e or --experiments      experiments
 // -g or --loop				cycles to execute for each iteration (latency hiding)
-// -f or --prefetch			prefetch data
+// -f or --prefetch			use of prefetching
 // -a or --access           memory access pattern
 //         random           random access pattern
 //         forward <stride> exclusive OR and mask
@@ -214,7 +214,25 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			}
 		} else if (strcasecmp(argv[i], "-f") == 0
 				|| strcasecmp(argv[i], "--prefetch") == 0) {
-			this->prefetch = true;
+			i++;
+			if (i == argc) {
+				error = 1;
+				break;
+			}
+			if (strcasecmp(argv[i], "none") == 0) {
+				this->prefetch_hint = Experiment::NONE;
+			} else if (strcasecmp(argv[i], "nta") == 0) {
+				this->prefetch_hint = Experiment::NTA;
+			} else if (strcasecmp(argv[i], "t0") == 0) {
+				this->prefetch_hint = Experiment::T0;
+			} else if (strcasecmp(argv[i], "t1") == 0) {
+				this->prefetch_hint = Experiment::T1;
+			} else if (strcasecmp(argv[i], "t2") == 0) {
+				this->prefetch_hint = Experiment::T2;
+			} else {
+				error = 1;
+				break;
+			}
 		} else if (strcasecmp(argv[i], "-a") == 0
 				|| strcasecmp(argv[i], "--access") == 0) {
 			i++;
@@ -346,7 +364,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 		printf("    [-n|--numa]        <placement> # numa placement\n");
 		printf("    [-s|--seconds]     <number>    # run each experiment for <number> seconds\n");
 		printf("    [-g|--loop]        <number>    # cycles to execute for each iteration (latency hiding)\n");
-		printf("    [-f|--prefetch]                # prefetch data\n");
+		printf("    [-f|--prefetch]    <hint>      # use of prefetching\n");
 		printf("    [-x|--strict]                  # fail rather than adjust options to sensible values\n");
 		printf("\n");
 		printf("<pattern> is selected from the following:\n");
@@ -362,6 +380,13 @@ int Experiment::parse_args(int argc, char* argv[]) {
 		printf("    csv                            # results in csv format only\n");
 		printf("    both                           # header and results in csv format\n");
 		printf("    table                          # human-readable table of values\n");
+		printf("\n");
+		printf("<hint> is selected from the following:\n");
+		printf("    none                           # do not use prefetching\n");
+		printf("    nta                            # use the NTA hint (non-temporal, only used once)\n");
+		printf("    t0                             # use the T0 hint (prefetch into all caches)\n");
+		printf("    t1                             # use the T1 hint (prefetch into all caches except L1)\n");
+		printf("    t2                             # use the T2 hint (prefetch into all caches except L1 & L2)\n");
 		printf("\n");
 		printf("<placement> is selected from the following:\n");
 		printf("    local                          # all chains are allocated locally\n");
@@ -656,7 +681,7 @@ void Experiment::print() {
 	printf("num_threads       = %d\n", num_threads);
 	printf("bytes_per_test    = %d\n", bytes_per_test);
 	printf("loop length       = %d\n", loop_length);
-	printf("prefetch          = %s\n", prefetch?"yes":"no");
+	printf("prefetch hint     = %s\n", prefetch_hint_string(prefetch_hint));
 	printf("iterations        = %d\n", iterations);
 	printf("experiments       = %d\n", experiments);
 	printf("access_pattern    = %d\n", access_pattern);

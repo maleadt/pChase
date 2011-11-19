@@ -54,11 +54,13 @@ public:
     int64 num_threads;		// number of threads in the experiment
     int64 bytes_per_test;	// test working set size (bytes)
     int64 loop_length;		// length of the inner loop (cycles)
-    bool prefetch;			// use of prefetching
 
     float seconds;			// number of seconds per experiment
     int64 iterations;		// number of iterations per experiment
     int64 experiments;		// number of experiments per test
+
+    enum { NONE, T0, T1, T2, NTA }
+    prefetch_hint;			// use of prefetching
 
     enum { CSV, BOTH, HEADER, TABLE }
 	output_mode;			// results output mode
@@ -101,9 +103,6 @@ public:
     const static int32 DEFAULT_ITERATIONS        = 0;
     const static int32 DEFAULT_EXPERIMENTS       = 1;
 
-    const static int32 DEFAULT_OUTPUT_MODE       = 1;
-    const static bool DEFAULT_PREFETCH           = false;
-
     void alloc_local();
 	void alloc_xor();
 	void alloc_add();
@@ -113,5 +112,21 @@ public:
 
 private:
 };
+
+
+inline const char* prefetch_hint_string(int32 prefetch_hint) {
+	switch (prefetch_hint) {
+	case Experiment::NONE:
+		return "none";
+	case Experiment::T0:
+		return "t0";
+	case Experiment::T1:
+		return "t1";
+	case Experiment::T2:
+		return "t2";
+	case Experiment::NTA:
+		return "nta";
+	}
+}
 
 #endif
