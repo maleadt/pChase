@@ -40,13 +40,13 @@ static double min(double v1, double v2);
 typedef void (*benchmark)(const Chain**);
 typedef benchmark (*generator)(int64 chains_per_thread,
 		int64 bytes_per_line, int64 bytes_per_chain,
-		int64 stride, int64 busy_cycles, bool prefetch);
+		int64 stride, int64 loop_length, bool prefetch);
 static benchmark chase_pointers(int64 chains_per_thread,
 		int64 bytes_per_line, int64 bytes_per_chain,
-		int64 stride, int64 busy_cycles, bool prefetch);
+		int64 stride, int64 loop_length, bool prefetch);
 static benchmark follow_streams(int64 chains_per_thread,
 		int64 bytes_per_line, int64 bytes_per_chain,
-		int64 stride, int64 busy_cycles, bool prefetch);
+		int64 stride, int64 loop_length, bool prefetch);
 
 Lock Run::global_mutex;
 int64 Run::_ops_per_chain = 0;
@@ -120,7 +120,7 @@ int Run::run() {
 		// compile benchmark
 		benchmark bench = gen(this->exp->chains_per_thread,
 				this->exp->bytes_per_line, this->exp->bytes_per_chain,
-				this->exp->stride, this->exp->busy_cycles,
+				this->exp->stride, this->exp->loop_length,
 				this->exp->prefetch);
 
 		volatile static double istart = 0;
@@ -170,7 +170,7 @@ int Run::run() {
 	// compile benchmark
 	benchmark bench = gen(this->exp->chains_per_thread,
 			this->exp->bytes_per_line, this->exp->bytes_per_chain,
-			this->exp->stride, this->exp->busy_cycles,
+			this->exp->stride, this->exp->loop_length,
 			this->exp->prefetch);
 
 	for (int e = 0; e < this->exp->experiments; e++) {
@@ -373,7 +373,7 @@ static benchmark chase_pointers(int64 chains_per_thread, // memory loading per t
 		int64 bytes_per_line, // ignored
 		int64 bytes_per_chain, // ignored
 		int64 stride, // ignored
-		int64 busy_cycles, // processing cycles
+		int64 loop_length, // processing cycles
 		bool prefetch // prefetch?
 		) {
 	// Create Compiler.
@@ -422,7 +422,7 @@ static benchmark chase_pointers(int64 chains_per_thread, // memory loading per t
 	}
 
 	// Wait
-	for (int i = 0; i < busy_cycles; i++)
+	for (int i = 0; i < loop_length; i++)
 		c.nop();
 
 	// Test if end reached
@@ -484,7 +484,7 @@ static benchmark follow_streams(int64 chains_per_thread, // memory loading per t
 		int64 bytes_per_line, // ignored
 		int64 bytes_per_chain, // ignored
 		int64 stride, // ignored
-		int64 busy_cycles, // ignored
+		int64 loop_length, // ignored
 		bool prefetch // ignored
 		) {
 	return 0;

@@ -49,6 +49,7 @@ void Output::header(Experiment &e, int64 ops, double secs, double ck_res) {
     printf("chains per thread,");
     printf("number of threads,");
     printf("iterations,");
+    printf("loop length,");
     printf("experiments,");
     printf("access pattern,");
     printf("stride,");
@@ -77,6 +78,7 @@ void Output::csv(Experiment &e, int64 ops, double secs, double ck_res) {
     printf("%lld,", e.chains_per_thread);
     printf("%ld,", e.num_threads);
     printf("%ld,", e.iterations);
+    printf("%ld,", e.loop_length);
     printf("%ld,", e.experiments);
     printf("%s,", e.access());
     printf("%ld,", e.stride);
@@ -118,6 +120,7 @@ void Output::table(Experiment &e, int64 ops, double secs, double ck_res) {
     printf("chains per thread    = %ld\n", e.chains_per_thread);
     printf("number of threads    = %ld\n", e.num_threads);
     printf("iterations           = %ld\n", e.iterations);
+    printf("loop length          = %ld\n", e.loop_length);
     printf("experiments          = %ld\n", e.experiments);
     printf("access pattern       = %s\n", e.access());
     printf("stride               = %ld\n", e.stride);
