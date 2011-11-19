@@ -34,7 +34,7 @@
 //
 
 Experiment::Experiment() :
-    strict           (0),
+    strict           (false),
     pointer_size     (DEFAULT_POINTER_SIZE),
     bytes_per_line   (DEFAULT_BYTES_PER_LINE),
     links_per_line   (DEFAULT_LINKS_PER_LINE),
@@ -101,7 +101,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 	for (int i = 1; i < argc; i++) {
 		if (strcasecmp(argv[i], "-x") == 0
 				|| strcasecmp(argv[i], "--strict") == 0) {
-			this->strict = 1;
+			this->strict = true;
 		} else if (strcasecmp(argv[i], "-s") == 0
 				|| strcasecmp(argv[i], "--seconds") == 0) {
 			i++;
@@ -638,7 +638,7 @@ void Experiment::alloc_map() {
 }
 
 void Experiment::print() {
-	printf("strict            = %d\n", strict);
+	printf("strict            = %s\n", strict?"yes":"no");
 	printf("pointer_size      = %d\n", pointer_size);
 	printf("sizeof(Chain)     = %d\n", sizeof(Chain));
 	printf("sizeof(Chain *)   = %d\n", sizeof(Chain *));
@@ -655,8 +655,8 @@ void Experiment::print() {
 	printf("bytes_per_thread  = %d\n", bytes_per_thread);
 	printf("num_threads       = %d\n", num_threads);
 	printf("bytes_per_test    = %d\n", bytes_per_test);
-	printf("busy cycles       = %d\n", loop_length);
-	printf("prefetch          = %d\n", prefetch);
+	printf("loop length       = %d\n", loop_length);
+	printf("prefetch          = %s\n", prefetch?"yes":"no");
 	printf("iterations        = %d\n", iterations);
 	printf("experiments       = %d\n", experiments);
 	printf("access_pattern    = %d\n", access_pattern);

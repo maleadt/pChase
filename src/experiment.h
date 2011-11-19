@@ -80,7 +80,7 @@ public:
 
     char** random_state;	// random state for each thread
 
-    int strict;				// strictly adhere to user input, or fail
+    bool strict;			// strictly adhere to user input, or fail
 
     const static int32 DEFAULT_POINTER_SIZE      = sizeof(Chain);
     const static int32 DEFAULT_BYTES_PER_LINE    = 64;
