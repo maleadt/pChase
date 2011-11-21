@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pgm=./pChase64_NUMA
+pgm=./chase
 
 b=(8k 16k 24k 32k 48k 64k 96k 128k 192k 256k 384k 512k 768k 1m 1536k 2m 3m 4m 6m 8m 12m 16m)
 c=5
