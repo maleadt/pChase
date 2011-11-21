@@ -96,8 +96,8 @@ int Run::run() {
 #endif
 
 	// initialize the chains and
-	// compile the function that
-	// will execute the tests
+	// select the function that
+	// will generate the tests
 	generator gen;
 	for (int i = 0; i < this->exp->chains_per_thread; i++) {
 		if (this->exp->access_pattern == Experiment::RANDOM) {
@@ -116,13 +116,14 @@ int Run::run() {
 		}
 	}
 
-	if (this->exp->iterations <= 0) {
-		// compile benchmark
-		benchmark bench = gen(this->exp->chains_per_thread,
-				this->exp->bytes_per_line, this->exp->bytes_per_chain,
-				this->exp->stride, this->exp->loop_length,
-				this->exp->prefetch_hint);
+	// compile benchmark
+	benchmark bench = gen(this->exp->chains_per_thread,
+			this->exp->bytes_per_line, this->exp->bytes_per_chain,
+			this->exp->stride, this->exp->loop_length,
+			this->exp->prefetch_hint);
 
+	// calculate the number of iterations
+	if (this->exp->iterations <= 0) {
 		volatile static double istart = 0;
 		volatile static double istop = 0;
 		volatile static double elapsed = 0;
@@ -164,15 +165,8 @@ int Run::run() {
 		}
 		this->bp->barrier();
 	}
-#if defined(UNDEFINED)
-#endif
 
-	// compile benchmark
-	benchmark bench = gen(this->exp->chains_per_thread,
-			this->exp->bytes_per_line, this->exp->bytes_per_chain,
-			this->exp->stride, this->exp->loop_length,
-			this->exp->prefetch_hint);
-
+	// run the experiments
 	for (int e = 0; e < this->exp->experiments; e++) {
 		// barrier
 		this->bp->barrier();
@@ -208,6 +202,7 @@ int Run::run() {
 
 	this->bp->barrier();
 
+	// clean the memory
 	for (int i = 0; i < this->exp->chains_per_thread; i++) {
 		if (chain_memory[i] != NULL
 			) delete[] chain_memory[i];
