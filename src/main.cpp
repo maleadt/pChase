@@ -70,11 +70,6 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-#if defined(UNDEFINED)
-	e.print();
-	if (argv != NULL) return 0;
-#endif
-
 	SpinBarrier sb(e.num_threads);
 	Run r[e.num_threads];
 	for (int i = 0; i < e.num_threads; i++) {
