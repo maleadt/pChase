@@ -37,7 +37,7 @@ void Lock::lock() {
 }
 
 int Lock::test() {
-	pthread_mutex_trylock(&(this->mutex));
+	return pthread_mutex_trylock(&(this->mutex));
 }
 
 void Lock::unlock() {
