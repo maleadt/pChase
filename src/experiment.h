@@ -65,7 +65,7 @@ public:
     enum { CSV, BOTH, HEADER, TABLE }
 	output_mode;			// results output mode
 
-    enum { RANDOM, STRIDED, STREAM }
+    enum { RANDOM, STRIDED }
 	access_pattern;			// memory access pattern
     int64 stride;
 

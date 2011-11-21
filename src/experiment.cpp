@@ -266,18 +266,6 @@ int Experiment::parse_args(int argc, char* argv[]) {
 					error = 1;
 					break;
 				}
-			} else if (strcasecmp(argv[i], "stream") == 0) {
-				this->access_pattern = STREAM;
-				i++;
-				if (i == argc) {
-					error = 1;
-					break;
-				}
-				this->stride = Experiment::parse_number(argv[i]);
-				if (this->stride == 0) {
-					error = 1;
-					break;
-				}
 			} else {
 				error = 1;
 				break;
@@ -371,7 +359,6 @@ int Experiment::parse_args(int argc, char* argv[]) {
 		printf("    random                         # all chains are accessed randomly\n");
 		printf("    forward <stride>               # chains are in forward order with constant stride\n");
 		printf("    reverse <stride>               # chains are in reverse order with constant stride\n");
-		printf("    stream  <stride>               # references are calculated rather than read from memory\n");
 		printf("\n");
 		printf("Note: <stride> is always a small positive integer.\n");
 		printf("\n");
@@ -712,8 +699,6 @@ const char* Experiment::access() {
 		result = "forward";
 	} else if (this->access_pattern == STRIDED && this->stride < 0) {
 		result = "reverse";
-	} else if (this->access_pattern == STREAM) {
-		result = "stream";
 	}
 
 	return result;
