@@ -23,6 +23,13 @@
 // Struct definition
 //
 
+/*
+ * Note that the Chain object should always be a Plain Old Data (POD) object,
+ * because it is used from within JIT-generated assembly code, so we need to
+ * be able to refer to its data members using the C macro offsetof. This is
+ * only possible in case of a POD object.
+ */
+
 struct Chain {
 	Chain* next;
 };
