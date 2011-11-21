@@ -32,7 +32,6 @@
 class Thread {
 public:
 	Thread();
-	~Thread();
 
 	virtual int run() = 0;
 
@@ -48,6 +47,7 @@ public:
 	static void exit();
 
 protected:
+	~Thread();
 	void lock();
 	void unlock();
 	static void global_lock();
