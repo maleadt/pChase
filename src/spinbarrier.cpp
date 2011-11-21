@@ -7,20 +7,8 @@
  *                                                                             *
  * Contributors:                                                               *
  *    Douglas M. Pase - initial API and implementation                         *
+ *    Tim Besard - prefetching, JIT compilation                                *
  *******************************************************************************/
-
-/******************************************************************************
- *                                                                            *
- * SpinBarrier                                                                *
- *                                                                            *
- * Author:  Douglas M. Pase                                                   *
- *                                                                            *
- * Date:    September 21, 2000                                                *
- *          Translated to C++, June 19, 2005                                  *
- *                                                                            *
- *  void barrier()                                                            *
- *                                                                            *
- ******************************************************************************/
 
 //
 // Configuration

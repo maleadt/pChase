@@ -7,6 +7,7 @@
  *                                                                             *
  * Contributors:                                                               *
  *    Douglas M. Pase - initial API and implementation                         *
+ *    Tim Besard - prefetching, JIT compilation                                *
  *******************************************************************************/
 
 //
