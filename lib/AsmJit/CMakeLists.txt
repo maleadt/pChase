@@ -57,5 +57,5 @@ If(${CMAKE_BUILD_TYPE})
   EndIf()
 EndIf()
 
-Add_Library(AsmJit SHARED ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
+Add_Library(AsmJit STATIC ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
 
