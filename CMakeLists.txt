@@ -7,6 +7,15 @@ project(pChase)
 
 SET(CMAKE_BUILD_TYPE "Release")
 
+option(CROSS_32BIT "Cross-build a 32-bit binary on a 64-bit system" OFF)
+if (CROSS_32BIT)
+	message(STATUS "NOTICE: building a 32-bit binary")
+	add_definitions(-m32)
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
+	set(CMAKE_SHARED_LIBRARY_C_FLAGS "${CMAKE_SHARED_LIBRARY_C_FLAGS} -m32")
+	set(CMAKE_SHARED_LIBRARY_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -m32")
+endif ()
+
 set (pChase_VERSION_MAJOR 0)
 set (pChase_VERSION_MINOR 4)
 
