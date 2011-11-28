@@ -83,9 +83,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	int64 ops = Run::ops_per_chain();
-	double secs = Run::seconds();
+	std::vector<double> seconds = Run::seconds();
 
-	Output::print(e, ops, secs, clk_res);
+	Output::print(e, ops, seconds, clk_res);
 
 	return 0;
 }

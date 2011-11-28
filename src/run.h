@@ -18,6 +18,10 @@
 #if !defined(RUN_H)
 #define RUN_H
 
+// System includes
+#include <vector>
+
+
 // Local includes
 #include "thread.h"
 #include "lock.h"
@@ -41,7 +45,7 @@ public:
 	static int64 ops_per_chain() {
 		return _ops_per_chain;
 	}
-	static double seconds() {
+	static std::vector<double> seconds() {
 		return _seconds;
 	}
 
@@ -56,7 +60,7 @@ private:
 
 	static Lock global_mutex; // global lock
 	static int64 _ops_per_chain; // total number of operations per chain
-	static double _seconds; // total number of seconds
+	static std::vector<double> _seconds; // number of seconds for each experiment
 };
 
 #endif

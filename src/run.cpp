@@ -22,7 +22,6 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <cstddef>
-#include <vector>
 #if defined(NUMA)
 #include <numa.h>
 #endif
@@ -48,7 +47,7 @@ static benchmark chase_pointers(int64 chains_per_thread,
 
 Lock Run::global_mutex;
 int64 Run::_ops_per_chain = 0;
-double Run::_seconds = 1E9;
+std::vector<double> Run::_seconds;
 
 Run::Run() :
 		exp(NULL), bp(NULL) {
@@ -189,7 +188,7 @@ int Run::run() {
 			if (this->thread_id() == 0) {
 				double delta = stop - start;
 				if (0 < delta) {
-					Run::_seconds = min(Run::_seconds, delta);
+					Run::_seconds.push_back(delta);
 				}
 			}
 		}
@@ -272,11 +271,9 @@ Run::random_mem_init(Chain *mem) {
 					+ link_within_line;
 
 			if (root == 0) {
-//		printf("root       = %d(%d)[0x%x].\n", page, line_within_page, mem+link);
 				prev = root = mem + link;
 				local_ops_per_chain += 1;
 			} else {
-//		printf("0x%x = %d(%d)[0x%x].\n", prev, page, line_within_page, mem+link);
 				prev->next = mem + link;
 				prev = prev->next;
 				local_ops_per_chain += 1;
@@ -303,11 +300,9 @@ Run::forward_mem_init(Chain *mem) {
 	for (int i = 0; i < this->exp->lines_per_chain; i += this->exp->stride) {
 		int link = i * this->exp->links_per_line + link_within_line;
 		if (root == NULL) {
-//	    printf("root       = %d(%d)[0x%x].\n", page, line_within_page, mem+link);
 			prev = root = mem + link;
 			local_ops_per_chain += 1;
 		} else {
-//	    printf("0x%x = %d(%d)[0x%x].\n", prev, page, line_within_page, mem+link);
 			prev->next = mem + link;
 			prev = prev->next;
 			local_ops_per_chain += 1;
@@ -339,11 +334,9 @@ Run::reverse_mem_init(Chain *mem) {
 	for (int i = last; 0 <= i; i -= stride) {
 		int link = i * this->exp->links_per_line + link_within_line;
 		if (root == 0) {
-//	    printf("root       = %d(%d)[0x%x].\n", page, line_within_page, mem+link);
 			prev = root = mem + link;
 			local_ops_per_chain += 1;
 		} else {
-//	    printf("0x%x = %d(%d)[0x%x].\n", prev, page, line_within_page, mem+link);
 			prev->next = mem + link;
 			prev = prev->next;
 			local_ops_per_chain += 1;

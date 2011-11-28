@@ -27,20 +27,20 @@
 // Implementation
 //
 
-void Output::print(Experiment &e, int64 ops, double secs, double ck_res) {
+void Output::print(Experiment &e, int64 ops, std::vector<double> seconds, double ck_res) {
 	if (e.output_mode == Experiment::CSV) {
-		Output::csv(e, ops, secs, ck_res);
-	} else if (e.output_mode == Experiment::BOTH) {
-		Output::header(e, ops, secs, ck_res);
-		Output::csv(e, ops, secs, ck_res);
-	} else if (e.output_mode == Experiment::HEADER) {
-		Output::header(e, ops, secs, ck_res);
+		Output::header(e, ops, ck_res);
+		for (int i = 0; i < seconds.size(); i++)
+			Output::csv(e, ops, seconds[i], ck_res);
 	} else {
-		Output::table(e, ops, secs, ck_res);
+		long double averaged_seconds = 0;
+		for (int i = 0; i < seconds.size(); i++)
+			averaged_seconds += seconds[i];
+		Output::table(e, ops, (double) (averaged_seconds/seconds.size()), ck_res);
 	}
 }
 
-void Output::header(Experiment &e, int64 ops, double secs, double ck_res) {
+void Output::header(Experiment &e, int64 ops, double ck_res) {
     printf("pointer size (bytes),");
     printf("cache line size (bytes),");
     printf("page size (bytes),");
