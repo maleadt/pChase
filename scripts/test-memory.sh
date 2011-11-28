@@ -1,38 +1,54 @@
-#!/bin/bash
+#!/bin/sh
 
-pgm=./chase
+#
+# Initialisation
+#
 
-b=(8k 16k 24k 32k 48k 64k 96k 128k 192k 256k 384k 512k 768k 1m 1536k 2m 3m 4m 6m 8m 12m 16m)
-c=5
+# Configurable variables
+pgm='../chase'
+output=chase.csv
 
-date
-uname -a
-echo
-$pgm -o hdr
+# Generate a timestamp
+timestamp=$(date +%Y%m%d-%H%M)
+
+# Create a temporary directory
+mkdir chase-$timestamp
+cd chase-$timestamp
+
+# Save some system information
+uname -a > kernel.txt
+cat /proc/cpuinfo > cpuinfo.txt
+cat /proc/meminfo > meminfo.txt
+
+
+#
+# Benchmark
+#
+
+echo Benchmark initiated at $(date +%Y%m%d-%H%M) > chase.log
+
+$pgm -o hdr | tee $output
 for page_size in 4k 8k 16k
 do
-    for threads in 1 2
+    for threads in 1 2 4 8
     do
-	for refs in 1 2 4
-	do
-	    for offset in 0 1
-	    do
-		for access in random "forward 1"
-		do
-		    for ((i=0; $i < ${#b[*]}; i++))
-		    do
-			for ((j=0; $j < $c; j++))
-			do 
-			    $pgm -p $page_size -t $threads -r $refs -n add $offset -a $access -c ${b[$i]} -s 1.0 -o csv
-			done
-		    done
-	        done
+        for refs in 1 2 4
+        do
+            for access in random "forward 1"
+            do
+                for chain_size in 8k 16k 512k 8m
+                do
+                    for prefetch in t0 t1 t2 nta
+                    do
+                        for loop_size in 0 25 100 500 2500
+                        do
+                            $pgm -p $page_size -t $threads -r $refs -a $access -c $chain_size -f $prefetch -s 1.0 -e 5 -o csv | tee -a $output
+                        done
+                    done
+                done
             done
         done
     done
 done
-echo
-cat /proc/cpuinfo
-cat /proc/meminfo
-date
 
+echo Benchmark ended at $(date +%Y%m%d-%H%M) > chase.log
