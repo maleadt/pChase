@@ -28,7 +28,12 @@
 //
 
 void Output::print(Experiment &e, int64 ops, std::vector<double> seconds, double ck_res) {
-	if (e.output_mode == Experiment::CSV) {
+	if (e.output_mode == Experiment::HEADER) {
+		Output::header(e, ops, ck_res);
+	} else if (e.output_mode == Experiment::CSV) {
+		for (int i = 0; i < seconds.size(); i++)
+			Output::csv(e, ops, seconds[i], ck_res);
+	} else if (e.output_mode == Experiment::BOTH) {
 		Output::header(e, ops, ck_res);
 		for (int i = 0; i < seconds.size(); i++)
 			Output::csv(e, ops, seconds[i], ck_res);

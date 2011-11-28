@@ -63,7 +63,7 @@ public:
     enum { NONE, T0, T1, T2, NTA }
     prefetch_hint;			// use of prefetching
 
-    enum { CSV, TABLE }
+    enum { CSV, BOTH, HEADER, TABLE }
 	output_mode;			// results output mode
 
     enum { RANDOM, STRIDED }

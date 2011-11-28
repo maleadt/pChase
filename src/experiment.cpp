@@ -87,8 +87,10 @@ Experiment::~Experiment() {
 //         forward <stride> exclusive OR and mask
 //         reverse <stride> addition and offset
 // -o or --output           output mode
-//         csv              csv format  (one entry per experiment)
-//         table            human-readable table of values (averaged)
+//         hdr              header only
+//         csv              csv only
+//         both             header + csv
+//         table            human-readable table of averaged values
 // -n or --numa             numa placement
 //         local            local allocation of all chains
 //         xor <mask>       exclusive OR and mask
@@ -280,6 +282,12 @@ int Experiment::parse_args(int argc, char* argv[]) {
 				this->output_mode = TABLE;
 			} else if (strcasecmp(argv[i], "csv") == 0) {
 				this->output_mode = CSV;
+			} else if (strcasecmp(argv[i], "both") == 0) {
+				this->output_mode = BOTH;
+			} else if (strcasecmp(argv[i], "hdr") == 0) {
+				this->output_mode = HEADER;
+			} else if (strcasecmp(argv[i], "header") == 0) {
+				this->output_mode = HEADER;
 			} else {
 				error = 1;
 				break;
@@ -356,8 +364,10 @@ int Experiment::parse_args(int argc, char* argv[]) {
 		printf("Note: <stride> is always a small positive integer.\n");
 		printf("\n");
 		printf("<format> is selected from the following:\n");
-		printf("    csv                            # results in csv format (one entry per experiment)\n");
-		printf("    table                          # human-readable table of values (averaged)\n");
+		printf("    hdr                            # csv header only\n");
+		printf("    csv                            # results in csv format only\n");
+		printf("    both                           # header and results in csv format\n");
+		printf("    table                          # human-readable table of averaged values\n");
 		printf("\n");
 		printf("<hint> is selected from the following:\n");
 		printf("    none                           # do not use prefetching\n");
