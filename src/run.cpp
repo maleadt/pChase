@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <cstddef>
+#include <algorithm>
 #if defined(NUMA)
 #include <numa.h>
 #endif
@@ -35,8 +36,6 @@
 // Implementation
 //
 
-static double max(double v1, double v2);
-static double min(double v1, double v2);
 typedef void (*benchmark)(const Chain**);
 typedef benchmark (*generator)(int64 chains_per_thread,
 		int64 bytes_per_line, int64 bytes_per_chain,
@@ -122,7 +121,7 @@ int Run::run() {
 		volatile static double istop = 0;
 		volatile static double elapsed = 0;
 		volatile static int64 iters = 1;
-		volatile double bound = max(0.2, 10 * Timer::resolution());
+		volatile double bound = std::max(0.2, 10 * Timer::resolution());
 		for (iters = 1; elapsed <= bound; iters = iters << 1) {
 			// barrier
 			this->bp->barrier();
@@ -151,10 +150,10 @@ int Run::run() {
 		// calculate the number of iterations
 		if (this->thread_id() == 0) {
 			if (0 < this->exp->seconds) {
-				this->exp->iterations = max(1,
+				this->exp->iterations = std::max(1.0,
 						0.9999 + 0.5 * this->exp->seconds * iters / elapsed);
 			} else {
-				this->exp->iterations = max(1, 0.9999 + iters / elapsed);
+				this->exp->iterations = std::max(1.0, 0.9999 + iters / elapsed);
 			}
 		}
 		this->bp->barrier();
@@ -211,18 +210,6 @@ int dummy = 0;
 void Run::mem_check(Chain *m) {
 	if (m == NULL
 		) dummy += 1;
-}
-
-static double max(double v1, double v2) {
-	if (v1 < v2)
-		return v2;
-	return v1;
-}
-
-static double min(double v1, double v2) {
-	if (v2 < v1)
-		return v2;
-	return v1;
 }
 
 // exclude 2 and Mersenne primes, i.e.,
