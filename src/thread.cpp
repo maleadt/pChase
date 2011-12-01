@@ -46,6 +46,26 @@ int Thread::start() {
 
 void*
 Thread::start_routine(void* p) {
+	// get the current affinity
+	cpu_set_t cs;
+	CPU_ZERO(&cs);
+	sched_getaffinity(0, sizeof(cs), &cs);
+
+	// deduce the amount of CPUs
+	int count = 0;
+	for (int i = 0; i < 8; i++)
+	{
+		if (CPU_ISSET(i, &cs))
+				count++;
+	}
+
+	// restrict to a single CPU
+	CPU_ZERO(&cs);
+	size_t size = CPU_ALLOC_SIZE(1);
+	CPU_SET_S(((Thread*) p)->id % count, size, &cs);
+	sched_setaffinity(pthread_self(), size, &cs);
+
+	// run
 	((Thread*) p)->run();
 
 	return NULL;
