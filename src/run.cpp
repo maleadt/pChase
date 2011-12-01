@@ -116,7 +116,13 @@ int Run::run() {
 			this->exp->prefetch_hint);
 
 	// calculate the number of iterations
-	if (this->exp->iterations <= 0) {
+	/*
+	 * As soon as the thread count rises, this calculation HUGELY
+	 * differs between runs. What does cause this? Threads are already
+	 * limited to certain CPUs, so it's not caused by excessive switching.
+	 * Strange cache behaviour?
+	 */
+	if (0 == this->exp->iterations) {
 		volatile static double istart = 0;
 		volatile static double istop = 0;
 		volatile static double elapsed = 0;
@@ -155,6 +161,7 @@ int Run::run() {
 			} else {
 				this->exp->iterations = std::max(1.0, 0.9999 + iters / elapsed);
 			}
+			//printf("Tested %d iterations: took %f seconds; scheduling %d iterations\n", iters, elapsed, this->exp->iterations);
 		}
 		this->bp->barrier();
 	}
