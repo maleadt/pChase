@@ -98,126 +98,151 @@ Experiment::~Experiment() {
 //         map <map>        explicit mapping of threads and chains to domains
 
 int Experiment::parse_args(int argc, char* argv[]) {
-	int error = 0;
+	bool error = false;
+	bool usage = false;
+	const size_t errorStringSize = 100;
+	char errorString[errorStringSize] = "unknown error";
 	for (int i = 1; i < argc; i++) {
-		if (strcasecmp(argv[i], "-x") == 0
+		if (strcasecmp(argv[i], "-h") == 0
+				|| strcasecmp(argv[i], "--help") == 0) {
+			usage = true;
+		} else if (strcasecmp(argv[i], "-x") == 0
 				|| strcasecmp(argv[i], "--strict") == 0) {
 			this->strict = true;
 		} else if (strcasecmp(argv[i], "-s") == 0
 				|| strcasecmp(argv[i], "--seconds") == 0) {
 			i++;
-			if (i == argc) {
-				error = 1;
+			if (i == argc) {			
+				strncpy(errorString, "amount of seconds missing", errorStringSize);
+				error = true;
 				break;
 			}
 			this->seconds = Experiment::parse_real(argv[i]);
 			this->iterations = 0;
 			if (this->seconds == 0) {
-				error = 1;
+				strncpy(errorString, "amount of seconds cannot be 0", errorStringSize);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-l") == 0
 				|| strcasecmp(argv[i], "--line") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				error = true;
+				strncpy(errorString, "cache line size missing", errorStringSize);
 				break;
 			}
 			this->bytes_per_line = Experiment::parse_number(argv[i]);
 			if (this->bytes_per_line == 0) {
-				error = 1;
+				strncpy(errorString, "cache line size cannot be 0", errorStringSize);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-p") == 0
 				|| strcasecmp(argv[i], "--page") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "page size missing", errorStringSize);
+				error = true;
 				break;
 			}
 			this->bytes_per_page = Experiment::parse_number(argv[i]);
 			if (this->bytes_per_page == 0) {
-				error = 1;
+				strncpy(errorString, "page size cannot be 0", errorStringSize);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-c") == 0
 				|| strcasecmp(argv[i], "--chain") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "chain size missing", errorStringSize);
+				error = true;
 				break;
 			}
 			this->bytes_per_chain = Experiment::parse_number(argv[i]);
 			if (this->bytes_per_chain == 0) {
-				error = 1;
+				strncpy(errorString, "chain size cannot be 0", errorStringSize);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-r") == 0
 				|| strcasecmp(argv[i], "--references") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "amount of chains per thread missing", errorStringSize);
+				error = true;
 				break;
 			}
 			this->chains_per_thread = Experiment::parse_number(argv[i]);
 			if (this->chains_per_thread == 0) {
-				error = 1;
+				strncpy(errorString, "amount of chains per thread cannot be 0", errorStringSize);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-t") == 0
 				|| strcasecmp(argv[i], "--threads") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "amount of threads missing", errorStringSize);
+				error = true;
 				break;
 			}
 			this->num_threads = Experiment::parse_number(argv[i]);
 			if (this->num_threads == 0) {
-				error = 1;
+				strncpy(errorString, "amount of threads cannot be 0", errorStringSize);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-i") == 0
 				|| strcasecmp(argv[i], "--iterations") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "amount of iterations missing", errorStringSize);
+				error = true;
 				break;
 			}
 			this->iterations = Experiment::parse_number(argv[i]);
 			this->seconds = 0;
 			if (this->iterations == 0) {
-				error = 1;
+				strncpy(errorString, "amount of iterations cannot be 0", errorStringSize);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-e") == 0
 				|| strcasecmp(argv[i], "--experiments") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "amount of experiments missing", errorStringSize);
+				error = true;
 				break;
 			}
 			this->experiments = Experiment::parse_number(argv[i]);
 			if (this->experiments == 0) {
-				error = 1;
+				strncpy(errorString, "amount of experiments cannot be 0", errorStringSize);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-g") == 0
 				|| strcasecmp(argv[i], "--loop") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "loop length missing", errorStringSize);
+				error = true;
 				break;
 			}
 			this->loop_length = Experiment::parse_number(argv[i]);
 			if (this->experiments == 0) {
-				error = 1;
+				strncpy(errorString, "loop length cannot be 0", errorStringSize);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-f") == 0
 				|| strcasecmp(argv[i], "--prefetch") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "type of prefetch hint missing", errorStringSize);
+				error = true;
 				break;
 			}
 			if (strcasecmp(argv[i], "none") == 0) {
@@ -231,14 +256,16 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			} else if (strcasecmp(argv[i], "t2") == 0) {
 				this->prefetch_hint = Experiment::T2;
 			} else {
-				error = 1;
+				snprintf(errorString, errorStringSize, "invalid type of prefetch hint -- '%s'", argv[i]);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-a") == 0
 				|| strcasecmp(argv[i], "--access") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "type of memory access pattern missing", errorStringSize);
+				error = true;
 				break;
 			}
 			if (strcasecmp(argv[i], "random") == 0) {
@@ -247,35 +274,41 @@ int Experiment::parse_args(int argc, char* argv[]) {
 				this->access_pattern = STRIDED;
 				i++;
 				if (i == argc) {
-					error = 1;
+					strncpy(errorString, "stride of forward memory access pattern missing", errorStringSize);
+					error = true;
 					break;
 				}
 				this->stride = Experiment::parse_number(argv[i]);
 				if (this->stride == 0) {
-					error = 1;
+					strncpy(errorString, "stride of forward memory access pattern cannot be 0", errorStringSize);
+					error = true;
 					break;
 				}
 			} else if (strcasecmp(argv[i], "reverse") == 0) {
 				this->access_pattern = STRIDED;
 				i++;
 				if (i == argc) {
-					error = 1;
+					strncpy(errorString, "stride of reverse memory access pattern missing", errorStringSize);
+					error = true;
 					break;
 				}
 				this->stride = -Experiment::parse_number(argv[i]);
 				if (this->stride == 0) {
-					error = 1;
+					strncpy(errorString, "stride of reverse memory access pattern cannot be 0", errorStringSize);
+					error = true;
 					break;
 				}
 			} else {
-				error = 1;
+				snprintf(errorString, errorStringSize, "invalid type of memory access pattern -- '%s'", argv[i]);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-o") == 0
 				|| strcasecmp(argv[i], "--output") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "output format missing", errorStringSize);
+				error = true;
 				break;
 			}
 			if (strcasecmp(argv[i], "table") == 0) {
@@ -289,14 +322,16 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			} else if (strcasecmp(argv[i], "header") == 0) {
 				this->output_mode = HEADER;
 			} else {
-				error = 1;
+				snprintf(errorString, errorStringSize, "invalid output format -- '%s'", argv[i]);
+				error = true;
 				break;
 			}
 		} else if (strcasecmp(argv[i], "-n") == 0
 				|| strcasecmp(argv[i], "--numa") == 0) {
 			i++;
 			if (i == argc) {
-				error = 1;
+				strncpy(errorString, "numa placement missing", errorStringSize);
+				error = true;
 				break;
 			}
 			if (strcasecmp(argv[i], "local") == 0) {
@@ -305,7 +340,8 @@ int Experiment::parse_args(int argc, char* argv[]) {
 				this->numa_placement = XOR;
 				i++;
 				if (i == argc) {
-					error = 1;
+					strncpy(errorString, "numa placement local map missing", errorStringSize);
+					error = true;
 					break;
 				}
 				this->offset_or_mask = Experiment::parse_number(argv[i]);
@@ -313,7 +349,8 @@ int Experiment::parse_args(int argc, char* argv[]) {
 				this->numa_placement = ADD;
 				i++;
 				if (i == argc) {
-					error = 1;
+					strncpy(errorString, "numa placement addition offset missing", errorStringSize);
+					error = true;
 					break;
 				}
 				this->offset_or_mask = Experiment::parse_number(argv[i]);
@@ -321,16 +358,19 @@ int Experiment::parse_args(int argc, char* argv[]) {
 				this->numa_placement = MAP;
 				i++;
 				if (i == argc) {
-					error = 1;
+					strncpy(errorString, "numa placement map specification missing", errorStringSize);
+					error = true;
 					break;
 				}
 				this->placement_map = argv[i];
 			} else {
-				error = 1;
+				snprintf(errorString, errorStringSize, "invalid numa placement -- '%s'", argv[i]);
+				error = true;
 				break;
 			}
 		} else {
-			error = 1;
+			snprintf(errorString, errorStringSize, "invalid option -- '%s'", argv[i]);
+			error = true;
 			break;
 		}
 	}
@@ -338,6 +378,14 @@ int Experiment::parse_args(int argc, char* argv[]) {
 
 	// if we've hit an error, print a message and quit
 	if (error) {
+		printf("chase: %s\n", errorString);
+		printf("Try 'chase --help' for more information.\n");
+		
+		return 1;	
+	}
+	
+	// print the usage
+	if (usage) {
 		printf("usage: %s <options>\n", argv[0]);
 		printf("where <options> are selected from the following:\n");
 		printf("    [-h|--help]                    # this message\n");
@@ -399,7 +447,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 		printf("Final note: strict is not yet fully implemented, and\n");
 		printf("maps do not gracefully handle ill-formed map specifications.\n");
 
-		return 1;
+		return 0;
 	}
 
 
@@ -408,16 +456,16 @@ int Experiment::parse_args(int argc, char* argv[]) {
 	// compute lines per page and lines per chain
 	// based on input and defaults.
 	// we round up page and chain sizes when needed.
-    this->lines_per_page   = (this->bytes_per_page+this->bytes_per_line-1) / this->bytes_per_line;
-    this->bytes_per_page   = this->bytes_per_line * this->lines_per_page;
-    this->pages_per_chain  = (this->bytes_per_chain+this->bytes_per_page-1) / this->bytes_per_page;
-    this->bytes_per_chain  = this->bytes_per_page * this->pages_per_chain;
-    this->bytes_per_thread = this->bytes_per_chain * this->chains_per_thread;
-    this->bytes_per_test   = this->bytes_per_thread * this->num_threads;
-    this->links_per_line   = this->bytes_per_line / pointer_size;
-    this->links_per_page   = this->lines_per_page * this->links_per_line;
-    this->lines_per_chain  = this->lines_per_page * this->pages_per_chain;
-    this->links_per_chain  = this->lines_per_chain * this->links_per_line;
+	this->lines_per_page   = (this->bytes_per_page+this->bytes_per_line-1) / this->bytes_per_line;
+	this->bytes_per_page   = this->bytes_per_line * this->lines_per_page;
+	this->pages_per_chain  = (this->bytes_per_chain+this->bytes_per_page-1) / this->bytes_per_page;
+	this->bytes_per_chain  = this->bytes_per_page * this->pages_per_chain;
+	this->bytes_per_thread = this->bytes_per_chain * this->chains_per_thread;
+	this->bytes_per_test   = this->bytes_per_thread * this->num_threads;
+	this->links_per_line   = this->bytes_per_line / pointer_size;
+	this->links_per_page   = this->lines_per_page * this->links_per_line;
+	this->lines_per_chain  = this->lines_per_page * this->pages_per_chain;
+	this->links_per_chain  = this->lines_per_chain * this->links_per_line;
 
 
 	// allocate the chain roots for all threads
