@@ -120,7 +120,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			this->seconds = Experiment::parse_real(argv[i]);
 			this->iterations = 0;
 			if (this->seconds == 0) {
-				strncpy(errorString, "amount of seconds cannot be 0", errorStringSize);
+				strncpy(errorString, "invalid amount of seconds", errorStringSize);
 				error = true;
 				break;
 			}
@@ -134,7 +134,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			}
 			this->bytes_per_line = Experiment::parse_number(argv[i]);
 			if (this->bytes_per_line == 0) {
-				strncpy(errorString, "cache line size cannot be 0", errorStringSize);
+				strncpy(errorString, "invalid cache line size", errorStringSize);
 				error = true;
 				break;
 			}
@@ -148,7 +148,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			}
 			this->bytes_per_page = Experiment::parse_number(argv[i]);
 			if (this->bytes_per_page == 0) {
-				strncpy(errorString, "page size cannot be 0", errorStringSize);
+				strncpy(errorString, "invalid page size", errorStringSize);
 				error = true;
 				break;
 			}
@@ -162,7 +162,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			}
 			this->bytes_per_chain = Experiment::parse_number(argv[i]);
 			if (this->bytes_per_chain == 0) {
-				strncpy(errorString, "chain size cannot be 0", errorStringSize);
+				strncpy(errorString, "invalid chain size", errorStringSize);
 				error = true;
 				break;
 			}
@@ -176,7 +176,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			}
 			this->chains_per_thread = Experiment::parse_number(argv[i]);
 			if (this->chains_per_thread == 0) {
-				strncpy(errorString, "amount of chains per thread cannot be 0", errorStringSize);
+				strncpy(errorString, "invalid amount of chains per thread", errorStringSize);
 				error = true;
 				break;
 			}
@@ -190,7 +190,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			}
 			this->num_threads = Experiment::parse_number(argv[i]);
 			if (this->num_threads == 0) {
-				strncpy(errorString, "amount of threads cannot be 0", errorStringSize);
+				strncpy(errorString, "invalid amount of threads", errorStringSize);
 				error = true;
 				break;
 			}
@@ -205,7 +205,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			this->iterations = Experiment::parse_number(argv[i]);
 			this->seconds = 0;
 			if (this->iterations == 0) {
-				strncpy(errorString, "amount of iterations cannot be 0", errorStringSize);
+				strncpy(errorString, "invalid amount of iterations", errorStringSize);
 				error = true;
 				break;
 			}
@@ -219,7 +219,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			}
 			this->experiments = Experiment::parse_number(argv[i]);
 			if (this->experiments == 0) {
-				strncpy(errorString, "amount of experiments cannot be 0", errorStringSize);
+				strncpy(errorString, "invalid amount of experiments", errorStringSize);
 				error = true;
 				break;
 			}
@@ -233,7 +233,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 			}
 			this->loop_length = Experiment::parse_number(argv[i]);
 			if (this->experiments == 0) {
-				strncpy(errorString, "loop length cannot be 0", errorStringSize);
+				strncpy(errorString, "invalid loop length", errorStringSize);
 				error = true;
 				break;
 			}
@@ -280,7 +280,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 				}
 				this->stride = Experiment::parse_number(argv[i]);
 				if (this->stride == 0) {
-					strncpy(errorString, "stride of forward memory access pattern cannot be 0", errorStringSize);
+					strncpy(errorString, "invalid stride of forward memory access pattern", errorStringSize);
 					error = true;
 					break;
 				}
@@ -294,7 +294,7 @@ int Experiment::parse_args(int argc, char* argv[]) {
 				}
 				this->stride = -Experiment::parse_number(argv[i]);
 				if (this->stride == 0) {
-					strncpy(errorString, "stride of reverse memory access pattern cannot be 0", errorStringSize);
+					strncpy(errorString, "invalid stride of reverse memory access pattern", errorStringSize);
 					error = true;
 					break;
 				}
