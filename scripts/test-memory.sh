@@ -5,7 +5,6 @@
 #
 
 # Configurable variables
-pgm='../chase'
 output=chase.csv
 
 # Generate a timestamp
@@ -25,30 +24,22 @@ cat /proc/meminfo > meminfo.txt
 # Benchmark
 #
 
-echo Benchmark initiated at $(date +%Y%m%d-%H%M) > chase.log
+echo Benchmark initiated at $(date +%Y%m%d-%H%M) | tee -a chase.log
 
-$pgm -o hdr | tee $output
-for page_size in 4k 8k 16k
+chase -o hdr | tee $output
+for chain_size in 8k 16k 64k 256k 512k 1m 2m 3m 6m 12m
 do
-    for threads in 1 2 4 8
+    for loop_size in 0 25 100 500 2500
     do
-        for refs in 1 2 4
-        do
-            for access in random "forward 1"
+		for access in random "forward 1"
+		do
+            for prefetch in none nta t0 t1 t2
             do
-                for chain_size in 8k 16k 512k 8m
-                do
-                    for prefetch in t0 t1 t2 nta
-                    do
-                        for loop_size in 0 25 100 500 2500
-                        do
-                            $pgm -p $page_size -t $threads -r $refs -a $access -c $chain_size -f $prefetch -s 1.0 -e 5 -o csv | tee -a $output
-                        done
-                    done
-                done
+                chase -c $chain_size -g $loop_size -a $access -f $prefetch -s 1.0 -e 5 -o csv | tee -a $output
             done
         done
     done
 done
 
-echo Benchmark ended at $(date +%Y%m%d-%H%M) > chase.log
+echo Benchmark ended at $(date +%Y%m%d-%H%M) | tee -a chase.log
+
