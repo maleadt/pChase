@@ -5,8 +5,6 @@
 cmake_minimum_required(VERSION 2.6)
 project(pChase)
 
-SET(CMAKE_BUILD_TYPE "Release")
-
 set (pChase_VERSION_MAJOR 0)
 set (pChase_VERSION_MINOR 4)
 
